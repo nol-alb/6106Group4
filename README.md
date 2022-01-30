@@ -47,7 +47,7 @@ The flow chart already includes processor blocks.
   - RMS level detectors
   - Smoothing Filter
   - Expander and Compression
-- Dey
+- Delay
   - IIR Filter comb filter design, input signal circulates into a delay line that is feedback to the signal chain 
   - [Echo effect reference](https://github.com/nxbyte/PythonAudioEffects/blob/master/AudioLib/AudioProcessing.py)
 - Reverb
