@@ -18,6 +18,11 @@ The target users for our application involve any users with a broadband audio si
 
 ## UI Mock-up
 ![UI/UX](images/mockup-plugin.png)
+- With the UI we have planned the user will have control over the bandwidth of 4 frequency bands that the stem cab be split by
+- Additonaly they can adjust the gain of the input broadband signal
+- Each Band of plugins have solo and mute functionality, with additonal gain and pan functionality
+- POST the effects the user has control over the output gian and pan
+- The user is presented with a level meter and information of latency that is a result of the plugin chains to the audio signal
 
 ## Functionality from user point of view and how it differentiates from similar products 
 
