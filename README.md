@@ -14,7 +14,16 @@ We are aiming to create an application that can split signals into frequency ban
 
 ## Applications, use cases, and target users 
 
-The target users for our application involve any users with a broadband audio signal to process. This applicaiton will allow users to have access to a large variety of third-party plugins to apply to a range of bands within the application for optimal sound quality control. We hope to make the system easy to use, with minimal latency between band effects and an easy to understand UI. 
+The target users for our application involve any users with a broadband audio signal to process. This applicaiton will allow users to have access to a large variety of third-party plugins to apply to a range of bands within the application for optimal sound quality control. We hope to make the system easy to use, with minimal latency between band effects and an easy to understand UI. We see this mainly as a creative tool used by producers but can also extend its applications in corrective engineering of the tracks.
+
+## UI Mock-up
+![UI/UX](images/mockup-plugin.png)
+- With the UI we have planned, the user will have control over the bandwidth of 4 frequency bands that the stem cab be split into
+- They can adjust the gain of the input broadband signal
+- Each Band of plugins have solo and mute functionality, with additonal gain and pan
+- POST the effects the user has control over the output gain and pan
+- The user is presented with a level meter and information of latency that is a result of the plugin chains to the audio signal
+- Each band can also be bypassed
 
 ## Functionality from user point of view and how it differentiates from similar products 
 
@@ -31,7 +40,7 @@ The target users for our application involve any users with a broadband audio si
 
 The flow chart already includes processor blocks.
 
-![flow_chart](flowchart.png)
+![flow_chart](images/FlowASE.drawio.png)
 
 ### Needed components and potential need for 3rd-party libs
 
