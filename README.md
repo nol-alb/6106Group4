@@ -14,7 +14,7 @@ We are aiming to create an application that can split signals into frequency ban
 
 ## Applications, use cases, and target users 
 
-The target users for our application are individual vocalists. These vocalists often need to rely on external dependencies such as a DAW to get the correct modifications to their sound that they want. Our plan is to have a standalone application with built in effects, so that a user can experiment with different FX chains. 
+The target users for our application involve any users with a broadband audio signal to process. This applicaiton will allow users to have access to a large variety of third-party plugins to apply to a range of bands within the application for optimal sound quality control. We hope to make the system easy to use, with minimal latency between band effects and an easy to understand UI. 
 
 ## Functionality from user point of view and how it differentiates from similar products 
 
