@@ -22,10 +22,14 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                        )
 #endif
 {
+    graph = new juce::AudioProcessorGraph();
+    pluginList = new juce::KnownPluginList();
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
 {
+    delete graph;
+    delete pluginList;
 }
 
 //==============================================================================
