@@ -14,8 +14,7 @@ j
     The VST instances can be created using 
     AudioPluginFormatManager.createPluginInstance().
 
-    The list of known plugins can be scanned using 
-    KnownPluginList.scanAndAddFile() and KnownPluginList.getTypeForFile().
+    The list of known plugins can be scanned using PluginDirectoryScanner.
 
     To list plugins, there's a class called PluginListComponent.
 
@@ -123,7 +122,6 @@ private:
     */
     
     //==============================================================================
-    juce::KnownPluginList *pluginList;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessor)
 };
