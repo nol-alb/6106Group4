@@ -6,7 +6,8 @@
   ==============================================================================
 */
 
-#pragma once
+#ifndef __hdr_PluginEditor_h__
+#define __hdr_PluginEditor_h__
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
@@ -31,3 +32,5 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessorEditor)
 };
+
+#endif // __hdr_PluginEditor_h__

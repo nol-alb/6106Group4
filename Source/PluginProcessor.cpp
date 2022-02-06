@@ -6,8 +6,7 @@
   ==============================================================================
 */
 
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
+#include "PluginInclude.h"
 
 //==============================================================================
 RecursionTestAudioProcessor::RecursionTestAudioProcessor()
@@ -23,16 +22,76 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
 #endif
 {
     graph = new juce::AudioProcessorGraph();
+    audioPluginFormatManager = new juce::AudioPluginFormatManager();
+
+    // plugin format manager initialization
+    audioPluginFormatManager->addDefaultFormats(); /* call this method is ESSENTIAL!!!
+                                                   otherwise it would report "No compatible plug-in 
+                                                   format exists for this plug-in" when trying to 
+                                                   `createPluginInstance` below */
 
     // graph initialization
     // add input & output node
-    auto inputNode = graph->addNode(std::make_unique<juce::AudioProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioInputNode));
-    auto outputNode = graph->addNode(std::make_unique<juce::AudioProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioOutputNode));
+    auto inputNode = graph->addNode(std::make_unique<juce::AudioProcessorGraph::AudioGraphIOProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioInputNode));
+    auto outputNode = graph->addNode(std::make_unique<juce::AudioProcessorGraph::AudioGraphIOProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioOutputNode));
 
     // plugin list initialization
+    pluginLists = new juce::KnownPluginList();
 
-    // the following code is just for test. Please don't use them in formal release.
+    // prepare for scan
+    juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
+    juce::FileSearchPath pluginSearchPath("C:/Program Files/Common Files/VST3");
+    const juce::File deadVSTFiles = juce::File();
+    juce::PluginDirectoryScanner scanner(*pluginLists, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
+
+    DBG("Trying to scan plugins");
+
+    while (true) {
+        juce::String nameOfNextPluginToBeScanned = scanner.getNextPluginFileThatWillBeScanned();
+        DBG("Scanning plugin " << nameOfNextPluginToBeScanned); 
+        try {
+            bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
+            if (!anyMoreFile) {
+                break;
+            }
+        }
+        catch (std::exception ce) {
+            DBG("FAILED WHEN SCANNING " << nameOfNextPluginToBeScanned);
+        }
+
+    };
+
+    DBG("Plugin scan completed. Here's list of plugin that is available to use");
+    int cnt = 0;
+    for (auto pluginDescription : pluginLists->getTypes()) {
+        DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
+    }
+
+    // the following code is just for test. Please don't use them for other purposes.
+    // they are not carefully written to be sustainable, and should soly serve for test.
+    juce::AudioProcessorGraph::Node::Ptr pluginNode;
+    juce::String errorString;
+    auto scannedPluginList = pluginLists->getTypes();
+    for (auto pluginDescription : scannedPluginList) {
+        DBG("Loading Plugin " << pluginDescription.name);
+        errorString.clear();
     
+        auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
+        if (pluginInstance != nullptr) {
+            pluginNode = graph->addNode(std::move(pluginInstance));
+            DBG("Plugin " << pluginDescription.name << " Loaded");
+            break;
+        }
+        else {
+            DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
+        }
+    }
+    
+    for (int channel = 0; channel < 2; ++channel) {
+        graph->addConnection({ {inputNode->nodeID, channel}, {pluginNode->nodeID, channel} });
+        graph->addConnection({ {pluginNode->nodeID, channel}, {outputNode->nodeID, channel} });
+    }
+
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -107,12 +166,18 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
+    for (int i = 0; i < graph->getNumNodes(); ++i) {
+        graph->getNode(i)->getProcessor()->prepareToPlay(sampleRate, samplesPerBlock);
+    }
 }
 
 void RecursionTestAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
+    for (int i = 0; i < graph->getNumNodes(); ++i) {
+        graph->getNode(i)->getProcessor()->releaseResources();
+    }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations

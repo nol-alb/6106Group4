@@ -21,7 +21,8 @@ j
   ==============================================================================
 */
 
-#pragma once
+#ifndef __hdr_PluginProcessor_h__
+#define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
 
@@ -122,6 +123,10 @@ private:
     */
     
     //==============================================================================
+    juce::AudioPluginFormatManager *audioPluginFormatManager;
+    juce::KnownPluginList *pluginLists;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessor)
 };
+
+#endif // __hdr_PluginProcessor_h__
