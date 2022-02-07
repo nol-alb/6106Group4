@@ -39,9 +39,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     pluginLists = new juce::KnownPluginList();
 
     // prepare for scan
-    juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
     juce::FileSearchPath pluginSearchPath("C:/Program Files/Common Files/VST3");
-    const juce::File deadVSTFiles = juce::File();
     juce::PluginDirectoryScanner scanner(*pluginLists, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
 
     DBG("Trying to scan plugins");
@@ -51,6 +49,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         DBG("Scanning plugin " << nameOfNextPluginToBeScanned); 
         try {
             bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
+            anyMoreFile = false;
             if (!anyMoreFile) {
                 break;
             }
@@ -67,13 +66,24 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
     }
 
+    // stores the list of plugin node ID in vector
+    // this is essential for building the graph without bothering about unique_ptr
+    // **The GRAPH and the plugin node id VECTOR SHOULD BE MOVED TO A NEW CLASS**
+    // to take care of all updating stuffs.
+    for (int i = 0; i < numPluginMenu; ++i) {
+        // use -1 to represent that there's no plugin. 
+        // Since NodeID uses uint to represent id, therefore simply use UINT_MAX instead.
+        pluginNodeIDChain.emplace_back();
+    }
+
     // the following code is just for test. Please don't use them for other purposes.
     // they are not carefully written to be sustainable, and should soly serve for test.
+    /*
     juce::AudioProcessorGraph::Node::Ptr pluginNode;
     juce::String errorString;
     auto scannedPluginList = pluginLists->getTypes();
     for (auto pluginDescription : scannedPluginList) {
-        DBG("Loading Plugin " << pluginDescription.name);
+        DBG("Loading Plugin " << pluginDescription.name << ", with fs=" << getSampleRate() << ", block size=" << getBlockSize());
         errorString.clear();
     
         auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
@@ -91,12 +101,15 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         graph->addConnection({ {inputNode->nodeID, channel}, {pluginNode->nodeID, channel} });
         graph->addConnection({ {pluginNode->nodeID, channel}, {outputNode->nodeID, channel} });
     }
-
+    */
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
 {
     delete graph;
+    delete audioPluginFormatManager;
+    delete pluginLists;
+    delete pluginFormatToScan;
 }
 
 //==============================================================================
@@ -251,6 +264,35 @@ void RecursionTestAudioProcessor::setStateInformation (const void* data, int siz
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+//==============================================================================
+void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescription& pluginDescription) {
+    juce::AudioProcessorGraph::Node::Ptr pluginNode;
+    juce::String errorString;
+    auto scannedPluginList = pluginLists->getTypes();
+    auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
+    if (pluginInstance != nullptr) {
+        pluginNode = graph->addNode(std::move(pluginInstance));
+        
+        // First check if the current index already has plugin. 
+        // If there is then we are going to delete it.
+        // Otherwise it would cause memory leakage.
+        if (pluginNodeIDChain[index] != emptyNode) { // current has plugin, so delete
+            auto oldPluginInstanceNode = graph->getNodeForId(pluginNodeIDChain[index]);
+            if (oldPluginInstanceNode != nullptr) {
+                auto oldPluginInstance = std::move(oldPluginInstanceNode->getProcessor());
+                delete oldPluginInstance;
+            }
+        }
+        pluginNodeIDChain[index] = pluginNode->nodeID; /* simply recording nodeID, 
+                                                       the graph will not be constructed 
+                                                       until calling prepareForPlay(). */
+        DBG("Plugin " << pluginDescription.name << " Loaded");
+    }
+    else {
+        DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
+    }
 }
 
 //==============================================================================

@@ -69,6 +69,9 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    //==============================================================================
+    void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
+
 private:
     //==============================================================================
     juce::AudioProcessorGraph *graph; /* the graph that stores all instances and their connections.
@@ -123,8 +126,26 @@ private:
     */
     
     //==============================================================================
+    const int numPluginMenu = 3;
+
+    // TODO these stuff should not be managed by plugin processor
     juce::AudioPluginFormatManager *audioPluginFormatManager;
     juce::KnownPluginList *pluginLists;
+
+    // the plugin id chain that maintains the order of each plugin.
+    std::vector<juce::AudioProcessorGraph::NodeID> pluginNodeIDChain;
+
+    // the file that will be used in plugin scan to detect if plugin is dead.
+    const juce::File deadVSTFiles = juce::File();
+
+    // placeholder nodeID to reserve space for the plugin chain.
+    juce::AudioProcessorGraph::NodeID emptyNode { UINT32_MAX };
+
+    // the plugin format to be scanned. Should be released after called delete.
+    juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
+
+    friend class RecursionTestAudioProcessorEditor;
+    friend class PluginListPopupMenu;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessor)
 };
