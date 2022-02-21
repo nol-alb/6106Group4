@@ -13,7 +13,7 @@ You can play around with it follow this link to learn more about it:(https://www
     - Ensure you edit the VST3 exectable scheme to run on AudioPluginHost.app
     - Make sure you make the relavent connections as shown in the image below:
     
-    ![setup](https://github.com/still18/6106Group4/tree/Compressor_test/Images)
+    ![setup](Images/Screen%20Shot%202022-02-21%20at%205.17.39%20PM.png)
     
     
     
