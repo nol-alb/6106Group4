@@ -22,18 +22,18 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
                        )
 #endif
 {
-    attack = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Attack"));
-    jassert(attack != nullptr);
+    compressor.attack = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Attack"));
+    jassert(compressor.attack != nullptr);
     
-    release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
-    jassert(release != nullptr);
+    compressor.release = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Release"));
+    jassert(compressor.release != nullptr);
     
-    threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
-    jassert(threshold != nullptr);
-    ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
-    jassert(ratio != nullptr);
-    bypassed = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("Bypassed"));
-    jassert(bypassed != nullptr);
+    compressor.threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("Threshold"));
+    jassert(compressor.threshold != nullptr);
+    compressor.ratio = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("Ratio"));
+    jassert(compressor.ratio != nullptr);
+    compressor.bypassed = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter("Bypassed"));
+    jassert(compressor.bypassed != nullptr);
     
     
     
@@ -173,18 +173,23 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
+    compressor.updateCompressorSettings();
+    compressor.process(buffer);
     
-    compressor.setAttack(attack->get());
-    compressor.setRelease(release->get());
-    compressor.setThreshold(threshold->get());
-    compressor.setRatio( ratio->getCurrentChoiceName().getFloatValue() );
+    //Changing the code to work through a modularized compressor struct - 23/2/22
     
-    auto block  = juce::dsp::AudioBlock<float>(buffer);
-    auto context = juce::dsp::ProcessContextReplacing<float>(block);
+//    compressor.setAttack(attack->get());
+//    compressor.setRelease(release->get());
+//    compressor.setThreshold(threshold->get());
+//    compressor.setRatio( ratio->getCurrentChoiceName().getFloatValue() );
+//
+//    auto block  = juce::dsp::AudioBlock<float>(buffer);
+//    auto context = juce::dsp::ProcessContextReplacing<float>(block);
+//
+//    context.isBypassed = bypassed->get();
+//
+//    compressor.process(context);
     
-    context.isBypassed = bypassed->get();
-    
-    compressor.process(context);
     
     
 }
