@@ -18,7 +18,7 @@ namespace Params
 //Create a map that behaves as a lookup table for the string names we used in the layout in cpp processor file
 enum Names
 {
-    Low_mid_Crossover_Freq,
+    Low_Mid_Crossover_Freq,
     Mid_High_Crossover_Freq,
     
     Threshold_Low_Band,
@@ -48,7 +48,7 @@ inline const std::map<Names, juce::String>& GetParams()
 {
    static std::map<Names, juce::String> params =
     {
-        {Low_mid_Crossover_Freq, "Low-Mid Crossover Freq"},
+        {Low_Mid_Crossover_Freq, "Low-Mid Crossover Freq"},
         {Mid_High_Crossover_Freq, "Mid-High Crossover Freq"},
         
         {Threshold_Low_Band,"Threshold Low Band"},
@@ -175,6 +175,13 @@ private:
 //    juce::AudioParameterChoice* ratio { nullptr };
 //    juce::AudioParameterBool* bypassed { nullptr};
     CompressorBand compressor;
+    using Filter = juce::dsp::LinkwitzRileyFilter<float>;
+    Filter LP,HP;
+    
+    juce::AudioParameterFloat* lowCrossover { nullptr };
+    
+    //Create additional buffers so you don't lose any information after doing the low passing
+    std::array<juce::AudioBuffer<float>, 2> filterBuffers;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessor)
 };

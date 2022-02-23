@@ -40,26 +40,33 @@ NewProjectAudioProcessor::NewProjectAudioProcessor()
         
     };
     
-    floatHelper((compressor.attack), Names::Attack_Low_Band);
-    floatHelper(compressor.release, Names::Release_Low_Band);
-    floatHelper(compressor.threshold, Names::Threshold_Low_Band);
-    
     auto choiceHelper = [&apvts = this->apvts, &params](auto& param, const auto& paramName)
     {
         param = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter(params.at(paramName)));
         jassert(param != nullptr);
         
     };
-    
-    choiceHelper(compressor.ratio, Names::Ratio_Low_Band);
-    
     auto boolHelper = [&apvts = this->apvts, &params](auto& param, const auto& paramName)
     {
         param = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(params.at(paramName)));
         jassert(param != nullptr);
         
     };
+    
+    floatHelper((compressor.attack), Names::Attack_Low_Band);
+    floatHelper(compressor.release, Names::Release_Low_Band);
+    floatHelper(compressor.threshold, Names::Threshold_Low_Band);
+    
+    choiceHelper(compressor.ratio, Names::Ratio_Low_Band);
+    
     boolHelper(compressor.bypassed, Names::Bypassed_Low_Band);
+    
+    floatHelper(lowCrossover,Names::Low_Mid_Crossover_Freq);
+    
+    LP.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+
+    
     
     
     
@@ -158,7 +165,17 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.numChannels = getTotalNumOutputChannels();
     spec.sampleRate = sampleRate;
     
+    //Make sure you prepare each of the dsp functionality with the spec!
+    
     compressor.prepare(spec);
+    HP.prepare(spec);
+    LP.prepare(spec);
+    
+    for( auto& buffer: filterBuffers )
+    {
+        buffer.setSize(spec.numChannels, samplesPerBlock);
+        
+    }
     
     
 }
@@ -216,8 +233,62 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     // the samples and the outer loop is handling the channels.
     // Alternatively, you can process the samples with the channels
     // interleaved by keeping the same state.
-    compressor.updateCompressorSettings();
-    compressor.process(buffer);
+    
+    
+    
+    //Compressor Functionality
+    
+//    compressor.updateCompressorSettings();
+//    compressor.process(buffer);
+    
+    //Filter Functionality
+    
+    for ( auto& fb : filterBuffers )
+    {
+        fb = buffer;
+        
+    }
+    
+    auto cutoff = lowCrossover->get();
+    LP.setCutoffFrequency(cutoff);
+    HP.setCutoffFrequency(cutoff);
+    
+    auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
+    auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
+    /*
+     Contains context information that is passed into an algorithm's process method.
+
+     This context is intended for use in situations where a single block is being used for both the input and output, so it will return the same object for both its getInputBlock() and getOutputBlock() methods.
+     **/
+    auto fb0Ctx = juce::dsp::ProcessContextReplacing<float>(fb0Block);
+    auto fb1Ctx = juce::dsp::ProcessContextReplacing<float>(fb1Block);
+    
+    //processing the audio
+    LP.process(fb0Ctx);
+    HP.process(fb1Ctx);
+    
+    //Input buffer is split and processed seperately, now we need to add them up together to ease our processing
+    
+    auto numSamples = buffer.getNumSamples();
+    auto numChannels = buffer.getNumChannels();
+    
+    //clear the final buffer before feeding the input to it
+    
+    buffer.clear();
+    
+    //Another lambda function to add each channel of the processed buffers into the output buffer
+    
+    auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source)
+    {
+        for ( auto i= 0; i<nc; ++i)
+        {
+            inputBuffer.addFrom(i,0, source, i, 0, ns);
+        }
+    };
+    
+    addFilterBand(buffer, filterBuffers[0]);
+    addFilterBand(buffer, filterBuffers[1]);
+    
     
     //Changing the code to work through a modularized compressor struct - 23/2/22
     
@@ -304,6 +375,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout NewProjectAudioProcessor::cr
     }
     
     layout.add(std::make_unique<AudioParameterChoice>(params.at(Names::Ratio_Low_Band),params.at(Names::Ratio_Low_Band), sa,3));
+    
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq),params.at(Names::Low_Mid_Crossover_Freq),NormalisableRange<float>(20,2000, 1, 1),500));
     
     
     
