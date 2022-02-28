@@ -272,15 +272,16 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     }
 //    invAPBuffer = buffer;
     
-    auto lowMidcutoffFreq = lowMidCrossover->get();
-    LP1.setCutoffFrequency(lowMidcutoffFreq);
-    HP1.setCutoffFrequency(lowMidcutoffFreq);
+    auto lowMidCutoffFreq = lowMidCrossover->get();
+    LP1.setCutoffFrequency(lowMidCutoffFreq);
+    HP1.setCutoffFrequency(lowMidCutoffFreq);
+    
 //    invAP1.setCutoffFrequency(lowMidcutoffFreq);
     
     auto midHighCutoffFreq = midHighCrossover->get();
     AP2.setCutoffFrequency(midHighCutoffFreq);
-    LP2.setCutoffFrequency(lowMidcutoffFreq);
-    HP2.setCutoffFrequency(lowMidcutoffFreq);
+    LP2.setCutoffFrequency(midHighCutoffFreq);
+    HP2.setCutoffFrequency(midHighCutoffFreq);
 //    invAP2.setCutoffFrequency(midHighCutoffFreq);
     
     
