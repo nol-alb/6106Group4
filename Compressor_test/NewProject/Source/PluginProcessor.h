@@ -23,7 +23,7 @@ enum Names
     
     Threshold_Low_Band,
     Threshold_Mid_Band,
-    Threshold_high_Band,
+    Threshold_High_Band,
     
     Attack_Low_Band,
     Attack_Mid_Band,
@@ -53,7 +53,7 @@ inline const std::map<Names, juce::String>& GetParams()
         
         {Threshold_Low_Band,"Threshold Low Band"},
         {Threshold_Mid_Band,"Threshold Mid Band"},
-        {Threshold_high_Band,"Threshold High Band"},
+        {Threshold_High_Band,"Threshold High Band"},
         
         {Attack_Low_Band,"Attack Low Band"},
         {Attack_Mid_Band,"Attack Mid Band"},
@@ -174,7 +174,13 @@ private:
 //    juce::AudioParameterFloat* threshold { nullptr };
 //    juce::AudioParameterChoice* ratio { nullptr };
 //    juce::AudioParameterBool* bypassed { nullptr};
-    CompressorBand compressor;
+    std::array<CompressorBand, 3> compressors;
+    
+    CompressorBand& lowBandComp = compressors[0];
+    CompressorBand& midBandComp = compressors[1];
+    CompressorBand& highBandComp = compressors[2];
+    
+    
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;
 //    Filter LP,HP;
 //
