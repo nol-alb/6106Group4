@@ -33,7 +33,6 @@ private:
 
     // GUI things
     PluginListPopupMenu** pluginListPopupMenus;
-    juce::TextButton button {"just a harmless button"};
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessorEditor)
 };

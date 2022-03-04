@@ -126,7 +126,7 @@ private:
     */
     
     //==============================================================================
-    const int numPluginMenu = 3;
+    const int numPluginMenu = 5;
 
     // TODO these stuff should not be managed by plugin processor
     juce::AudioPluginFormatManager *audioPluginFormatManager;

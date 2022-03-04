@@ -49,7 +49,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         DBG("Scanning plugin " << nameOfNextPluginToBeScanned); 
         try {
             bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
-            anyMoreFile = false;
+            // anyMoreFile = false;
             if (!anyMoreFile) {
                 break;
             }
@@ -268,6 +268,11 @@ void RecursionTestAudioProcessor::setStateInformation (const void* data, int siz
 
 //==============================================================================
 void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescription& pluginDescription) {
+
+    // this function will be called when user choose from text button's popup menu.
+    // we need to get lock to update the internal graph.
+    juce::ScopedLock lock(getCallbackLock());
+
     juce::AudioProcessorGraph::Node::Ptr pluginNode;
     juce::String errorString;
     auto scannedPluginList = pluginLists->getTypes();
@@ -276,14 +281,16 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
         pluginNode = graph->addNode(std::move(pluginInstance));
         
         // First check if the current index already has plugin. 
-        // If there is then we are going to delete it.
-        // Otherwise it would cause memory leakage.
-        if (pluginNodeIDChain[index] != emptyNode) { // current has plugin, so delete
+        // If there's already a plugin, then disconnect.
+        // Since it's reference counted object, if we disconnect (change reference), then ref cnt will dec by 1.
+        // According to https://docs.juce.com/master/classReferenceCountedObject.html#a523f06d996130f24b36996b28b83d802
+        // we know that when ref becomes 0, it will be automatically removed.
+        if (pluginNodeIDChain[index] != emptyNode) { // current has plugin...
             auto oldPluginInstanceNode = graph->getNodeForId(pluginNodeIDChain[index]);
-            if (oldPluginInstanceNode != nullptr) {
-                auto oldPluginInstance = std::move(oldPluginInstanceNode->getProcessor());
-                delete oldPluginInstance;
-            }
+            // if (oldPluginInstanceNode != nullptr) {
+            //     auto oldPluginInstance = std::move(oldPluginInstanceNode->getProcessor());
+            //     delete oldPluginInstance;
+            // }
         }
         pluginNodeIDChain[index] = pluginNode->nodeID; /* simply recording nodeID, 
                                                        the graph will not be constructed 
