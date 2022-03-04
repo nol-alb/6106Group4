@@ -11,9 +11,22 @@
 
 #include "PluginLinkedList.h"
 
+PluginLinkedList::Node::Node(std::unique_ptr<juce::AudioProcessor> p) {
+    processor = std::move(p);
+}
+
+PluginLinkedList::Node::~Node() {
+    processor.reset();
+}
+
+void PluginLinkedList::Node::set(std::unique_ptr<juce::AudioProcessor> p) {
+    processor.reset();
+    processor = std::move(p);
+}
+
 PluginLinkedList::PluginLinkedList() {
-    head = new Node();
-    tail = new Node();
+    head = new Node(nullptr);
+    tail = new Node(nullptr);
     head->next = tail;
     tail->prev = head;
 }
@@ -149,7 +162,9 @@ void PluginLinkedList::prepareToPlay(double sampleRate, int maximumExpectedSampl
 {
     Node::Ptr cur = head->next;
     while (cur != tail) {
-        cur->processor->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+        if (cur->processor != nullptr) {
+            cur->processor->prepareToPlay(sampleRate, maximumExpectedSamplesPerBlock);
+        }
         cur = cur->next;
     }
 }
@@ -158,7 +173,9 @@ void PluginLinkedList::releaseResources()
 {
     Node::Ptr cur = head->next;
     while (cur != tail) {
-        cur->processor->releaseResources();
+        if (cur->processor != nullptr) {
+            cur->processor->releaseResources();
+        }
         cur = cur->next;
     }
 }
@@ -167,7 +184,9 @@ void PluginLinkedList::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
 {
     Node::Ptr cur = head->next;
     while (cur != tail) {
-        cur->processor->processBlock(buffer, midiMessages);
+        if (cur->processor != nullptr) {
+            cur->processor->processBlock(buffer, midiMessages);
+        }
         cur = cur->next;
     }
 }

@@ -19,6 +19,11 @@ public:
 
     class Node: public juce::ReferenceCountedObject {
     public:
+        Node(std::unique_ptr<AudioProcessor> p);
+        virtual ~Node();
+
+        void set(std::unique_ptr<AudioProcessor> p);
+
         using Ptr = juce::ReferenceCountedObjectPtr<Node>;
         Node::Ptr prev = nullptr, next = nullptr; // two empty node for coding convenience
         std::unique_ptr<AudioProcessor> processor;
@@ -34,14 +39,6 @@ public:
     Node::Ptr get(int);
 
     juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter();
-
-private:
-    int indexWrapper(int);
-    void __connect(Node::Ptr a, Node::Ptr b); // will be used in both insert & remove
-    void __insert(Node::Ptr a, Node::Ptr b, Node::Ptr c); // originally a -> b, then insert c, such that a -> c -> b
-
-    int __len = 0;
-    Node::Ptr head = nullptr, tail = nullptr;
 
     // Inherited via AudioProcessor
     double getTailLengthSeconds() const override;
@@ -60,6 +57,15 @@ private:
     void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) override;
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override;
+
+private:
+    int indexWrapper(int);
+    void __connect(Node::Ptr a, Node::Ptr b); // will be used in both insert & remove
+    void __insert(Node::Ptr a, Node::Ptr b, Node::Ptr c); // originally a -> b, then insert c, such that a -> c -> b
+
+    int __len = 0;
+    Node::Ptr head = nullptr, tail = nullptr;
+
 };
 
 #endif

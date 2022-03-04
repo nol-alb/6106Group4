@@ -21,7 +21,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                        )
 #endif
 {
-    graph = new juce::AudioProcessorGraph();
+    // graph = new juce::AudioProcessorGraph();
     audioPluginFormatManager = new juce::AudioPluginFormatManager();
 
     // plugin format manager initialization
@@ -29,11 +29,6 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                                                    otherwise it would report "No compatible plug-in 
                                                    format exists for this plug-in" when trying to 
                                                    `createPluginInstance` below */
-
-    // graph initialization
-    // add input & output node
-    auto inputNode = graph->addNode(std::make_unique<juce::AudioProcessorGraph::AudioGraphIOProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioInputNode));
-    auto outputNode = graph->addNode(std::make_unique<juce::AudioProcessorGraph::AudioGraphIOProcessor>(juce::AudioProcessorGraph::AudioGraphIOProcessor::audioOutputNode));
 
     // plugin list initialization
     pluginLists = new juce::KnownPluginList();
@@ -66,14 +61,11 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
     }
 
-    // stores the list of plugin node ID in vector
-    // this is essential for building the graph without bothering about unique_ptr
-    // **The GRAPH and the plugin node id VECTOR SHOULD BE MOVED TO A NEW CLASS**
-    // to take care of all updating stuffs.
+    // initialize the plugin linked lists. Currently we use only one linked list as there's no frequency splitting utilities (at least in this branch)
+    pluginLinkedLists.add(std::make_unique<PluginLinkedList>());
     for (int i = 0; i < numPluginMenu; ++i) {
-        // use -1 to represent that there's no plugin. 
-        // Since NodeID uses uint to represent id, therefore simply use UINT_MAX instead.
-        pluginNodeIDChain.emplace_back();
+        PluginLinkedList::Node::Ptr new_node = new PluginLinkedList::Node(nullptr);
+        pluginLinkedLists[0]->append(new_node);
     }
 
     // the following code is just for test. Please don't use them for other purposes.
@@ -106,10 +98,10 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
 {
-    delete graph;
     delete audioPluginFormatManager;
     delete pluginLists;
     delete pluginFormatToScan;
+    pluginLinkedLists.clear();
 }
 
 //==============================================================================
@@ -179,8 +171,8 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    for (int i = 0; i < graph->getNumNodes(); ++i) {
-        graph->getNode(i)->getProcessor()->prepareToPlay(sampleRate, samplesPerBlock);
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
     }
 }
 
@@ -188,8 +180,8 @@ void RecursionTestAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    for (int i = 0; i < graph->getNumNodes(); ++i) {
-        graph->getNode(i)->getProcessor()->releaseResources();
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->releaseResources();
     }
 }
 
@@ -238,7 +230,9 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     //     // ..do something to the data...
     // }
 
-    graph->processBlock(buffer, midiMessages);
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->processBlock(buffer, midiMessages);
+    }
 }
 
 //==============================================================================
@@ -278,23 +272,7 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
     auto scannedPluginList = pluginLists->getTypes();
     auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
     if (pluginInstance != nullptr) {
-        pluginNode = graph->addNode(std::move(pluginInstance));
-        
-        // First check if the current index already has plugin. 
-        // If there's already a plugin, then disconnect.
-        // Since it's reference counted object, if we disconnect (change reference), then ref cnt will dec by 1.
-        // According to https://docs.juce.com/master/classReferenceCountedObject.html#a523f06d996130f24b36996b28b83d802
-        // we know that when ref becomes 0, it will be automatically removed.
-        if (pluginNodeIDChain[index] != emptyNode) { // current has plugin...
-            auto oldPluginInstanceNode = graph->getNodeForId(pluginNodeIDChain[index]);
-            // if (oldPluginInstanceNode != nullptr) {
-            //     auto oldPluginInstance = std::move(oldPluginInstanceNode->getProcessor());
-            //     delete oldPluginInstance;
-            // }
-        }
-        pluginNodeIDChain[index] = pluginNode->nodeID; /* simply recording nodeID, 
-                                                       the graph will not be constructed 
-                                                       until calling prepareForPlay(). */
+        pluginLinkedLists[0]->append(new PluginLinkedList::Node(std::move(pluginInstance)));
         DBG("Plugin " << pluginDescription.name << " Loaded");
     }
     else {

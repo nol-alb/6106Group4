@@ -25,6 +25,7 @@ j
 #define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
+#include "PluginLinkedList.h"
 
 //==============================================================================
 /**
@@ -74,7 +75,8 @@ public:
 
 private:
     //==============================================================================
-    juce::AudioProcessorGraph *graph; /* the graph that stores all instances and their connections.
+    // juce::AudioProcessorGraph *graph; 
+    /* the graph that stores all instances and their connections.
                                      Here is an overview of how it looks:
                          ┌─────┐                           ┌───────────────┐
                          │INPUT│                           │SIDECHAIN INPUT│
@@ -127,13 +129,14 @@ private:
     
     //==============================================================================
     const int numPluginMenu = 5;
+    const int numBand = 1;
 
     // TODO these stuff should not be managed by plugin processor
     juce::AudioPluginFormatManager *audioPluginFormatManager;
     juce::KnownPluginList *pluginLists;
 
-    // the plugin id chain that maintains the order of each plugin.
-    std::vector<juce::AudioProcessorGraph::NodeID> pluginNodeIDChain;
+    // list of PluginLinkedList. Currently there will be only one element in the array.
+    juce::OwnedArray<PluginLinkedList> pluginLinkedLists;
 
     // the file that will be used in plugin scan to detect if plugin is dead.
     const juce::File deadVSTFiles = juce::File();
