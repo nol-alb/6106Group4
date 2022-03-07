@@ -272,11 +272,20 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
     auto scannedPluginList = pluginLists->getTypes();
     auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
     if (pluginInstance != nullptr) {
-        pluginLinkedLists[0]->append(new PluginLinkedList::Node(std::move(pluginInstance)));
+        auto nodePtr = pluginLinkedLists[0]->get(index);
+        nodePtr->processor = std::move(pluginInstance);
+        // pluginLinkedLists[0]->append(new PluginLinkedList::Node(std::move(pluginInstance)));
         DBG("Plugin " << pluginDescription.name << " Loaded");
     }
     else {
         DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
+    }
+}
+
+juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int index) {
+    auto nodePtr = pluginLinkedLists[0]->get(index);
+    if (nodePtr->processor != nullptr) {
+        return nodePtr->processor->createEditorIfNeeded();
     }
 }
 

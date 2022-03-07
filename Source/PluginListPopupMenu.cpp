@@ -15,15 +15,19 @@ PluginListPopupMenu::PluginListPopupMenu(int menuIndex, RecursionTestAudioProces
     
     textButton = new juce::TextButton("Plugin Slot");
     m = new juce::PopupMenu();
+    createPluginEditorButton = new juce::TextButton("Open Editor");
 
     updateTextButtonPopupMenu();
+    updateCreatePluginEditorButton();
 
     addAndMakeVisible(*textButton);
+    addAndMakeVisible(*createPluginEditorButton);
 }
 
 PluginListPopupMenu::~PluginListPopupMenu() {
     delete textButton;
     delete m;
+    delete createPluginEditorButton;
 }
 
 void PluginListPopupMenu::paint(juce::Graphics& g) {
@@ -32,17 +36,18 @@ void PluginListPopupMenu::paint(juce::Graphics& g) {
 
 void PluginListPopupMenu::resized() {
     auto r = getLocalBounds();
-    textButton->setBounds(r.removeFromBottom(28).reduced(2));
+    textButton->setBounds(r.removeFromRight(r.getWidth() / 2));
+    createPluginEditorButton->setBounds(r.removeFromLeft(r.getWidth() / 2));
 }
 
 void PluginListPopupMenu::updateTextButtonPopupMenu() {
+    m->clear();
+    juce::KnownPluginList::addToMenu(
+        *m,
+        this->audioProcessor.pluginLists->getTypes(),
+        juce::KnownPluginList::SortMethod::sortAlphabetically
+    );
     textButton->onClick = [this]{
-        m->clear();
-        juce::KnownPluginList::addToMenu(
-            *m,
-            this->audioProcessor.pluginLists->getTypes(),
-            juce::KnownPluginList::SortMethod::sortAlphabetically
-        );
         m->showMenuAsync(juce::PopupMenu::Options().withTargetComponent(textButton),
             [this](int res) mutable {
                 auto types = this->audioProcessor.pluginLists->getTypes();
@@ -55,6 +60,15 @@ void PluginListPopupMenu::updateTextButtonPopupMenu() {
                 this->textButton->setButtonText(pluginDescription.name);
             }
         );
+    };
+}
+
+void PluginListPopupMenu::updateCreatePluginEditorButton() {
+    createPluginEditorButton->onClick = [this] {
+        this->editor = this->audioProcessor.createEditorAtIndex(this->menuIndex);
+        this->editor->setOpaque(true);
+        this->editor->addToDesktop(juce::ComponentPeer::windowHasCloseButton | juce::ComponentPeer::windowHasTitleBar);
+        this->editor->setVisible(true);
     };
 }
 

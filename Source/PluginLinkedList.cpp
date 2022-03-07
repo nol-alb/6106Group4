@@ -16,6 +16,7 @@ PluginLinkedList::Node::Node(std::unique_ptr<juce::AudioProcessor> p) {
 }
 
 PluginLinkedList::Node::~Node() {
+    std::printf("calling ~Node\n");
     processor.reset();
 }
 
@@ -39,6 +40,7 @@ PluginLinkedList::~PluginLinkedList() {
         temp_next = cur->next;
         cur->next = nullptr;
         cur->prev = nullptr;
+        cur.reset();
     }
     head = nullptr;
     tail = nullptr;

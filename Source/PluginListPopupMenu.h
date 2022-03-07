@@ -29,9 +29,13 @@ public:
 
 private:
     void updateTextButtonPopupMenu();
+    void updateCreatePluginEditorButton();
 
     juce::TextButton* textButton;
     juce::PopupMenu* m;
+    juce::TextButton* createPluginEditorButton;
+
+    juce::AudioProcessorEditor* editor;
     RecursionTestAudioProcessor& audioProcessor;
     int menuIndex;
 };

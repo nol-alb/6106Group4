@@ -72,6 +72,7 @@ public:
 
     //==============================================================================
     void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
+    juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
 private:
     //==============================================================================
