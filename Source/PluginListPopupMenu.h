@@ -35,7 +35,7 @@ private:
     juce::PopupMenu* m;
     juce::TextButton* createPluginEditorButton;
 
-    juce::AudioProcessorEditor* editor;
+    // juce::AudioProcessorEditor* editor;
     RecursionTestAudioProcessor& audioProcessor;
     int menuIndex;
 };

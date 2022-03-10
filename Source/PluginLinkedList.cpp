@@ -16,8 +16,21 @@ PluginLinkedList::Node::Node(std::unique_ptr<juce::AudioProcessor> p) {
 }
 
 PluginLinkedList::Node::~Node() {
-    std::printf("calling ~Node\n");
-    processor.reset();
+    clear();
+}
+
+void PluginLinkedList::Node::clear() {
+    if (processor != nullptr) {
+        auto editor = processor->getActiveEditor();
+        if (editor != nullptr) {
+            if (editor->isOnDesktop()) {
+                editor->removeFromDesktop();
+            }
+            delete editor;
+            editor = nullptr;
+        }
+        processor.reset();
+    }
 }
 
 void PluginLinkedList::Node::set(std::unique_ptr<juce::AudioProcessor> p) {

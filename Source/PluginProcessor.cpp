@@ -284,9 +284,10 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
 
 juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int index) {
     auto nodePtr = pluginLinkedLists[0]->get(index);
-    if (nodePtr->processor != nullptr) {
+    if (nodePtr != nullptr && nodePtr->processor != nullptr) {
         return nodePtr->processor->createEditorIfNeeded();
     }
+    return nullptr;
 }
 
 //==============================================================================

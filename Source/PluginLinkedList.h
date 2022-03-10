@@ -20,9 +20,12 @@ public:
     class Node: public juce::ReferenceCountedObject {
     public:
         Node(std::unique_ptr<AudioProcessor> p);
+
         virtual ~Node();
 
         void set(std::unique_ptr<AudioProcessor> p);
+
+        void clear();
 
         using Ptr = juce::ReferenceCountedObjectPtr<Node>;
         Node::Ptr prev = nullptr, next = nullptr; // two empty node for coding convenience

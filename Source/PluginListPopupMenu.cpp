@@ -65,10 +65,17 @@ void PluginListPopupMenu::updateTextButtonPopupMenu() {
 
 void PluginListPopupMenu::updateCreatePluginEditorButton() {
     createPluginEditorButton->onClick = [this] {
-        this->editor = this->audioProcessor.createEditorAtIndex(this->menuIndex);
-        this->editor->setOpaque(true);
-        this->editor->addToDesktop(juce::ComponentPeer::windowHasCloseButton | juce::ComponentPeer::windowHasTitleBar);
-        this->editor->setVisible(true);
+        juce::AudioProcessorEditor* tempEditor;
+        tempEditor = this->audioProcessor.createEditorAtIndex(this->menuIndex);
+        // tempEditor->userTriedToCloseWindow = [this] {
+
+        // };
+        if (tempEditor != nullptr) {
+            tempEditor->setOpaque(true);
+            tempEditor->setVisible(true);
+            tempEditor->setTopLeftPosition(100, 100);
+            tempEditor->addToDesktop(juce::ComponentPeer::windowIsTemporary | juce::ComponentPeer::windowHasTitleBar | juce::ComponentPeer::windowHasDropShadow | juce::ComponentPeer::windowHasCloseButton, 0);
+        }
     };
 }
 
