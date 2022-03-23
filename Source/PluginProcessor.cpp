@@ -34,6 +34,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     pluginLists = new juce::KnownPluginList();
 
     // prepare for scan
+
     juce::FileSearchPath pluginSearchPath("C:/Program Files/Common Files/VST3");
     juce::PluginDirectoryScanner scanner(*pluginLists, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
 
@@ -41,7 +42,10 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
 
     while (true) {
         juce::String nameOfNextPluginToBeScanned = scanner.getNextPluginFileThatWillBeScanned();
-        DBG("Scanning plugin " << nameOfNextPluginToBeScanned); 
+
+        if (nameOfNextPluginToBeScanned.contains(JucePlugin_Name)) {
+            scanner.skipNextFile();
+        }
         try {
             bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
             // anyMoreFile = false;
@@ -50,16 +54,15 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
             }
         }
         catch (std::exception ce) {
-            DBG("FAILED WHEN SCANNING " << nameOfNextPluginToBeScanned);
         }
 
     };
 
-    DBG("Plugin scan completed. Here's list of plugin that is available to use");
-    int cnt = 0;
-    for (auto pluginDescription : pluginLists->getTypes()) {
-        DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
-    }
+    // fileLogger.logMessage("Plugin scan completed. Here's list of plugin that is available to use");
+    // int cnt = 0;
+    // for (auto pluginDescription : pluginLists->getTypes()) {
+    //     DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
+    // }
 
     // initialize the plugin linked lists. Currently we use only one linked list as there's no frequency splitting utilities (at least in this branch)
     pluginLinkedLists.add(std::make_unique<PluginLinkedList>());

@@ -67,9 +67,7 @@ void PluginListPopupMenu::updateCreatePluginEditorButton() {
     createPluginEditorButton->onClick = [this] {
         juce::AudioProcessorEditor* tempEditor;
         tempEditor = this->audioProcessor.createEditorAtIndex(this->menuIndex);
-        // tempEditor->userTriedToCloseWindow = [this] {
 
-        // };
         if (tempEditor != nullptr) {
             tempEditor->setOpaque(true);
             tempEditor->setVisible(true);
