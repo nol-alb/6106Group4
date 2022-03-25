@@ -34,7 +34,7 @@ void PluginLinkedList::Node::clear() {
 }
 
 void PluginLinkedList::Node::set(std::unique_ptr<juce::AudioProcessor> p) {
-    processor.reset();
+    clear();
     processor = std::move(p);
 }
 

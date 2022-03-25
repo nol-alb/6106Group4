@@ -5,5 +5,6 @@
 #include "PluginProcessor.h"
 #include "PluginPluginManager.h"
 #include "PluginLinkedList.h"
+#include "PluginPluginEditor.h"
 
 #endif // __hdr_PluginInclude_h__

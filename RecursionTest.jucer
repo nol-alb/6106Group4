@@ -10,6 +10,10 @@
             file="Source/PluginLinkedList.h"/>
       <FILE id="fML9ZV" name="PluginListPopupMenu.cpp" compile="1" resource="0"
             file="Source/PluginListPopupMenu.cpp"/>
+      <FILE id="VfksB6" name="PluginPluginEditor.cpp" compile="1" resource="0"
+            file="Source/PluginPluginEditor.cpp"/>
+      <FILE id="Yoe5ik" name="PluginPluginEditor.h" compile="0" resource="0"
+            file="Source/PluginPluginEditor.h"/>
       <FILE id="HU9QIV" name="PluginListPopupMenu.h" compile="0" resource="0"
             file="Source/PluginListPopupMenu.h"/>
       <FILE id="xRKpHQ" name="PluginProcessor.cpp" compile="1" resource="0"

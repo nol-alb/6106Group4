@@ -276,8 +276,7 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
     auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
     if (pluginInstance != nullptr) {
         auto nodePtr = pluginLinkedLists[0]->get(index);
-        nodePtr->processor = std::move(pluginInstance);
-        // pluginLinkedLists[0]->append(new PluginLinkedList::Node(std::move(pluginInstance)));
+        nodePtr->set(std::move(pluginInstance));
         DBG("Plugin " << pluginDescription.name << " Loaded");
     }
     else {

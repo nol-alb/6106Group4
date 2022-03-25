@@ -8,7 +8,8 @@
   ==============================================================================
 */
 
-#include "PluginListPopupMenu.h"
+// #include "PluginListPopupMenu.h"
+#include "PluginInclude.h"
 
 PluginListPopupMenu::PluginListPopupMenu(int menuIndex, RecursionTestAudioProcessor& audioProcessor)
     : menuIndex(menuIndex), audioProcessor(audioProcessor) {
@@ -52,16 +53,30 @@ void PluginListPopupMenu::updateTextButtonPopupMenu() {
             [this](int res) mutable {
                 auto types = this->audioProcessor.pluginLists->getTypes();
                 int index = juce::KnownPluginList::getIndexChosenByMenu(types, res);
-                auto pluginDescription = types[index];
-                this->audioProcessor.setPluginAtIndex(
-                    this->menuIndex, 
-                    pluginDescription
-                );
-                this->textButton->setButtonText(pluginDescription.name);
+
+                if (0 <= index && index < types.size()) {
+                    auto pluginDescription = types[index];
+                    this->audioProcessor.setPluginAtIndex(
+                        this->menuIndex, 
+                        pluginDescription
+                    );
+                    this->textButton->setButtonText(pluginDescription.name);
+                }
             }
         );
     };
 }
+
+
+// class JUCE_API  AudioProcessorEditor : public juce::Component
+// {
+// public:
+//     void userTriedToCloseWindow() override {
+//         if (isOnDesktop()) {
+//             removeFromDesktop();
+//         }
+//     }
+// };
 
 void PluginListPopupMenu::updateCreatePluginEditorButton() {
     createPluginEditorButton->onClick = [this] {
@@ -73,6 +88,9 @@ void PluginListPopupMenu::updateCreatePluginEditorButton() {
             tempEditor->setVisible(true);
             tempEditor->setTopLeftPosition(100, 100);
             tempEditor->addToDesktop(juce::ComponentPeer::windowIsTemporary | juce::ComponentPeer::windowHasTitleBar | juce::ComponentPeer::windowHasDropShadow | juce::ComponentPeer::windowHasCloseButton, 0);
+        }
+        else {
+            DBG("SCREWED up");
         }
     };
 }
