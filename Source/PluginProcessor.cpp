@@ -97,6 +97,8 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         graph->addConnection({ {pluginNode->nodeID, channel}, {outputNode->nodeID, channel} });
     }
     */
+
+    gain.setGainDecibels(-6.0f);
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -174,18 +176,22 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
-    }
+
+    // for (auto pluginLinkedList : pluginLinkedLists) {
+    //     pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
+    // }
+    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), 2 };
+    gain.prepare (spec);
 }
 
 void RecursionTestAudioProcessor::releaseResources()
 {
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->releaseResources();
-    }
+
+    // for (auto pluginLinkedList : pluginLinkedLists) {
+    //     pluginLinkedList->releaseResources();
+    // }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -216,26 +222,22 @@ bool RecursionTestAudioProcessor::isBusesLayoutSupported (const BusesLayout& lay
 
 void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    // juce::ScopedNoDenormals noDenormals;
-    // auto totalNumInputChannels  = getTotalNumInputChannels();
-    // auto totalNumOutputChannels = getTotalNumOutputChannels();
+    juce::ScopedNoDenormals noDenormals;
+    auto totalNumInputChannels  = getTotalNumInputChannels();
+    auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    // for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    // {
-    //     auto* channelData = buffer.getWritePointer (channel);
-
-    //     // ..do something to the data...
-    // }
-
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->processBlock(buffer, midiMessages);
+    // clean junk channels
+    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
+        buffer.clear(i, 0, buffer.getNumSamples());
     }
+
+    juce::dsp::AudioBlock<float> block (buffer);
+    juce::dsp::ProcessContextReplacing<float> context (block);
+    gain.process (context);
+
+    // for (auto pluginLinkedList : pluginLinkedLists) {
+    //     pluginLinkedList->processBlock(buffer, midiMessages);
+    // }
 }
 
 //==============================================================================
@@ -261,6 +263,10 @@ void RecursionTestAudioProcessor::setStateInformation (const void* data, int siz
 {
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
+}
+
+void RecursionTestAudioProcessor::reset() {
+    gain.reset();
 }
 
 //==============================================================================

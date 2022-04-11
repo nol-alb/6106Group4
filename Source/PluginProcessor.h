@@ -71,6 +71,9 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
+    void reset() override;
+
+    //==============================================================================
     void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
@@ -147,6 +150,8 @@ private:
 
     // the plugin format to be scanned. Should be released after called delete.
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
+
+    juce::dsp::Gain<float> gain;
 
     friend class RecursionTestAudioProcessorEditor;
     friend class PluginListPopupMenu;

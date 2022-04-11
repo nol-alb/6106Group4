@@ -86,8 +86,13 @@ void PluginListPopupMenu::updateCreatePluginEditorButton() {
         if (tempEditor != nullptr) {
             tempEditor->setOpaque(true);
             tempEditor->setVisible(true);
-            tempEditor->setTopLeftPosition(100, 100);
-            tempEditor->addToDesktop(juce::ComponentPeer::windowIsTemporary | juce::ComponentPeer::windowHasTitleBar | juce::ComponentPeer::windowHasDropShadow | juce::ComponentPeer::windowHasCloseButton, 0);
+            if (!tempEditor->isOnDesktop()) {
+                tempEditor->setTopLeftPosition(100, 100);
+                tempEditor->addToDesktop(juce::ComponentPeer::windowHasTitleBar | juce::ComponentPeer::windowHasDropShadow | juce::ComponentPeer::windowHasCloseButton, 0);
+                tempEditor->setTitle(this->textButton->getButtonText());
+                DBG(this->textButton->getButtonText());
+                DBG(tempEditor->getTitle());
+            }
         }
         else {
             DBG("SCREWED up");

@@ -197,6 +197,12 @@ void PluginLinkedList::releaseResources()
 
 void PluginLinkedList::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    int num_channel = buffer.getNumChannels();
+
+    for (int i = 0; i < num_channel; ++i) {
+        buffer.applyGain(0.1);
+    }
+
     Node::Ptr cur = head->next;
     while (cur != tail) {
         if (cur->processor != nullptr) {
