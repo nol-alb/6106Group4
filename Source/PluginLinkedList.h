@@ -32,23 +32,6 @@ public:
 
     long long size() const;
 
-private:
-
-    void __connect(nodePtr a, nodePtr b);
-    void __disconnect(nodePtr a, nodePtr b);
-
-    void __insert(nodePtr a, nodePtr b, nodePtr c); // originally a -> b, then insert c, such that a -> c -> b
-    void __remove(nodePtr a, nodePtr b, nodePtr c); // originally a -> b -> c, then remove b, such that a -> c
-
-    void __indexWrapper(int&);
-
-    juce::AudioProcessorGraph::Connection __genConnection(nodePtr a, nodePtr b, int channelIndex);
-
-    nodePtr audioInputNode, audioOutputNode;
-
-    juce::AudioProcessorGraph graph;
-    std::list<nodePtr> nodeLinkedList;
-
     // Inherited via AudioProcessor
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
     virtual const juce::String getName() const override;
@@ -67,6 +50,23 @@ private:
     virtual void changeProgramName(int index, const juce::String& newName) override;
     virtual void getStateInformation(juce::MemoryBlock& destData) override;
     virtual void setStateInformation(const void* data, int sizeInBytes) override;
+
+private:
+
+    void __connect(nodePtr a, nodePtr b);
+    void __disconnect(nodePtr a, nodePtr b);
+
+    void __insert(nodePtr a, nodePtr b, nodePtr c); // originally a -> b, then insert c, such that a -> c -> b
+    void __remove(nodePtr a, nodePtr b, nodePtr c); // originally a -> b -> c, then remove b, such that a -> c
+
+    void __indexWrapper(int&);
+
+    juce::AudioProcessorGraph::Connection __genConnection(nodePtr a, nodePtr b, int channelIndex);
+
+    nodePtr audioInputNode, audioOutputNode;
+
+    juce::AudioProcessorGraph graph;
+    std::list<nodePtr> nodeLinkedList;
 };
 
 

@@ -34,7 +34,6 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     pluginLists = new juce::KnownPluginList();
 
     // prepare for scan
-
     juce::FileSearchPath pluginSearchPath("C:/Program Files/Common Files/VST3");
     juce::PluginDirectoryScanner scanner(*pluginLists, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
 
@@ -48,7 +47,6 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         }
         try {
             bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
-            // anyMoreFile = false;
             if (!anyMoreFile) {
                 break;
             }
@@ -58,47 +56,8 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
 
     };
 
-    // fileLogger.logMessage("Plugin scan completed. Here's list of plugin that is available to use");
-    // int cnt = 0;
-    // for (auto pluginDescription : pluginLists->getTypes()) {
-    //     DBG("Plugin " << cnt++ << ": " << pluginDescription.name);
-    // }
-
     // initialize the plugin linked lists. Currently we use only one linked list as there's no frequency splitting utilities (at least in this branch)
     pluginLinkedLists.add(std::make_unique<PluginLinkedList>());
-    for (int i = 0; i < numPluginMenu; ++i) {
-        PluginLinkedList::Node::Ptr new_node = new PluginLinkedList::Node(nullptr);
-        pluginLinkedLists[0]->append(new_node);
-    }
-
-    // the following code is just for test. Please don't use them for other purposes.
-    // they are not carefully written to be sustainable, and should soly serve for test.
-    /*
-    juce::AudioProcessorGraph::Node::Ptr pluginNode;
-    juce::String errorString;
-    auto scannedPluginList = pluginLists->getTypes();
-    for (auto pluginDescription : scannedPluginList) {
-        DBG("Loading Plugin " << pluginDescription.name << ", with fs=" << getSampleRate() << ", block size=" << getBlockSize());
-        errorString.clear();
-    
-        auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
-        if (pluginInstance != nullptr) {
-            pluginNode = graph->addNode(std::move(pluginInstance));
-            DBG("Plugin " << pluginDescription.name << " Loaded");
-            break;
-        }
-        else {
-            DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
-        }
-    }
-    
-    for (int channel = 0; channel < 2; ++channel) {
-        graph->addConnection({ {inputNode->nodeID, channel}, {pluginNode->nodeID, channel} });
-        graph->addConnection({ {pluginNode->nodeID, channel}, {outputNode->nodeID, channel} });
-    }
-    */
-
-    gain.setGainDecibels(-6.0f);
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -164,7 +123,7 @@ void RecursionTestAudioProcessor::setCurrentProgram (int index)
 
 const juce::String RecursionTestAudioProcessor::getProgramName (int index)
 {
-    return {};
+    return juce::String();
 }
 
 void RecursionTestAudioProcessor::changeProgramName (int index, const juce::String& newName)
@@ -177,11 +136,15 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 
-    // for (auto pluginLinkedList : pluginLinkedLists) {
-    //     pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
-    // }
-    juce::dsp::ProcessSpec spec { sampleRate, static_cast<juce::uint32> (samplesPerBlock), 2 };
-    gain.prepare (spec);
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->setPlayConfigDetails(
+            getMainBusNumInputChannels(),
+            getMainBusNumOutputChannels(),
+            sampleRate,
+            samplesPerBlock
+        );
+        pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
+    }
 }
 
 void RecursionTestAudioProcessor::releaseResources()
@@ -189,9 +152,9 @@ void RecursionTestAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 
-    // for (auto pluginLinkedList : pluginLinkedLists) {
-    //     pluginLinkedList->releaseResources();
-    // }
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->releaseResources();
+    }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -231,13 +194,9 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         buffer.clear(i, 0, buffer.getNumSamples());
     }
 
-    juce::dsp::AudioBlock<float> block (buffer);
-    juce::dsp::ProcessContextReplacing<float> context (block);
-    gain.process (context);
-
-    // for (auto pluginLinkedList : pluginLinkedLists) {
-    //     pluginLinkedList->processBlock(buffer, midiMessages);
-    // }
+    for (auto pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->processBlock(buffer, midiMessages);
+    }
 }
 
 //==============================================================================
@@ -266,10 +225,10 @@ void RecursionTestAudioProcessor::setStateInformation (const void* data, int siz
 }
 
 void RecursionTestAudioProcessor::reset() {
-    gain.reset();
 }
 
 //==============================================================================
+/*
 void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescription& pluginDescription) {
 
     // this function will be called when user choose from text button's popup menu.
@@ -289,11 +248,12 @@ void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescri
         DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
     }
 }
+*/
 
 juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int index) {
     auto nodePtr = pluginLinkedLists[0]->get(index);
-    if (nodePtr != nullptr && nodePtr->processor != nullptr) {
-        return nodePtr->processor->createEditorIfNeeded();
+    if (nodePtr != nullptr && nodePtr->getProcessor() != nullptr) {
+        return nodePtr->getProcessor()->createEditorIfNeeded();
     }
     return nullptr;
 }

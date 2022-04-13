@@ -74,7 +74,7 @@ public:
     void reset() override;
 
     //==============================================================================
-    void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
+    // void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
 private:
@@ -145,13 +145,8 @@ private:
     // the file that will be used in plugin scan to detect if plugin is dead.
     const juce::File deadVSTFiles = juce::File();
 
-    // placeholder nodeID to reserve space for the plugin chain.
-    juce::AudioProcessorGraph::NodeID emptyNode { UINT32_MAX };
-
     // the plugin format to be scanned. Should be released after called delete.
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
-
-    juce::dsp::Gain<float> gain;
 
     friend class RecursionTestAudioProcessorEditor;
     friend class PluginListPopupMenu;
