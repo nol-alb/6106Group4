@@ -15,6 +15,8 @@
 PluginLinkedList::PluginLinkedList()
     : AudioProcessor(BusesProperties().withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                                       .withOutput ("Output", juce::AudioChannelSet::stereo(), true)) {
+    graph.clear();
+
     using AudioGraphIOProcessor = juce::AudioProcessorGraph::AudioGraphIOProcessor;
     audioInputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
     audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
@@ -116,6 +118,7 @@ PluginLinkedList::nodePtr PluginLinkedList::remove(int index) {
         __connect(left, right);
 
         nodeLinkedList.remove(target);
+        return target;
     }
 }
 
@@ -202,13 +205,16 @@ void PluginLinkedList::processBlock(juce::AudioBuffer<float>& buffer, juce::Midi
         buffer.clear(i, 0, buffer.getNumSamples());
     }
 
-    for (auto node : nodeLinkedList) {
+    __connect(audioInputNode, audioOutputNode);
+
+    for (auto node : graph.getNodes()) {
         node->getProcessor()->setPlayConfigDetails(
             getMainBusNumInputChannels(),
             getMainBusNumOutputChannels(),
             getSampleRate(),
             getBlockSize()
         );
+        node->getProcessor()->enableAllBuses();
     }
 
     graph.processBlock(buffer, midiMessages);

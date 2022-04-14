@@ -56,10 +56,10 @@ void PluginListPopupMenu::updateTextButtonPopupMenu() {
 
                 if (0 <= index && index < types.size()) {
                     auto pluginDescription = types[index];
-                    this->audioProcessor.setPluginAtIndex(
-                        this->menuIndex, 
-                        pluginDescription
-                    );
+                    // this->audioProcessor.setPluginAtIndex(
+                    //     this->menuIndex, 
+                    //     pluginDescription
+                    // );
                     this->textButton->setButtonText(pluginDescription.name);
                 }
             }

@@ -33,30 +33,16 @@ RecursionTestAudioProcessorEditor::RecursionTestAudioProcessorEditor (RecursionT
     addAndMakeVisible(pluginListComponent);
     */
 
-    const int numPluginMenu = audioProcessor.numPluginMenu;
-
-    // initialize a sequence of plugins
-    /*
-    pluginMenus = new juce::PopupMenu * [numPluginMenu];
-    for (int i = 0; i < numPluginMenu; ++i) {
-        pluginMenus[i] = new juce::PopupMenu();
-        juce::KnownPluginList::addToMenu(
-            *pluginMenus[i], 
-            audioProcessor.pluginLists->getTypes(), 
-            juce::KnownPluginList::SortMethod::sortAlphabetically
-        );
-    }*/
+    // one vector for each popup menu
+    for (int i = 0; i < audioProcessor.numBand; ++i) {
+        pluginListPopupMenus.emplace_back(new std::list<PluginListPopupMenu*>);
+    }
 
     // initialize text buttons
     // look at the lambda callback function in PluginListPopupMenu to see how the plugin is placed
-    pluginListPopupMenus = new PluginListPopupMenu*[numPluginMenu];
-    for (int i = 0; i < numPluginMenu; ++i) {
-        pluginListPopupMenus[i] = new PluginListPopupMenu(i, audioProcessor);
-        addAndMakeVisible(*pluginListPopupMenus[i]);
-        audioProcessor.pluginLists->addChangeListener(static_cast<juce::ChangeListener*>(pluginListPopupMenus[i]));
-    }
-
-    // addAndMakeVisible(button);
+    // new PluginListPopupMenu(i, audioProcessor)
+    // addAndMakeVisible(*pluginListPopupMenus[i]);
+    // audioProcessor.pluginLists->addChangeListener(static_cast<juce::ChangeListener*>(pluginListPopupMenus[i]));
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
@@ -66,11 +52,10 @@ RecursionTestAudioProcessorEditor::RecursionTestAudioProcessorEditor (RecursionT
 
 RecursionTestAudioProcessorEditor::~RecursionTestAudioProcessorEditor()
 {
-    const int numPluginMenu = audioProcessor.numPluginMenu;
-    for (int i = 0; i < numPluginMenu; ++i) {
-        delete pluginListPopupMenus[i];
+    for (auto popupMenuList : pluginListPopupMenus) {
+        while (!popupMenuList->empty()) delete popupMenuList->front(), popupMenuList->pop_front();
     }
-    delete[] pluginListPopupMenus;
+    while (!pluginListPopupMenus.empty()) delete pluginListPopupMenus.back(), pluginListPopupMenus.pop_back();
 }
 
 //==============================================================================
@@ -85,9 +70,11 @@ void RecursionTestAudioProcessorEditor::resized()
     // This is generally where you'll want to lay out the positions of any
     // subcomponents in your editor..
 
-    const int numPluginMenu = audioProcessor.numPluginMenu;
-
-    for (int i = 0; i < numPluginMenu; ++i) {
-        pluginListPopupMenus[i]->setBounds(0, i * (getHeight() / numPluginMenu), getWidth(), getHeight() / numPluginMenu);
-    }
+    // int popupMenuListIndex = 0;
+    // for (auto popupMenuList : pluginListPopupMenus) {
+    //     for (auto popupMenu : *popupMenuList) {
+    //         popupMenu->setBounds();
+    //     }
+    //     ++popupMenuListIndex;
+    // }
 }

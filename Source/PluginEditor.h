@@ -32,7 +32,7 @@ private:
     RecursionTestAudioProcessor& audioProcessor;
 
     // GUI things
-    PluginListPopupMenu** pluginListPopupMenus;
+    std::vector<std::list<PluginListPopupMenu*>*> pluginListPopupMenus;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessorEditor)
 };

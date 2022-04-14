@@ -25,7 +25,6 @@ j
 #define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
-#include "PluginLinkedList.h"
 
 //==============================================================================
 /**
@@ -78,6 +77,11 @@ public:
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
 private:
+    using AudioProcessorGraph = juce::AudioProcessorGraph;
+    using AudioGraphIOProcessor = AudioProcessorGraph::AudioGraphIOProcessor;
+    using Node = juce::AudioProcessorGraph::Node;
+    using NodePtr = Node::Ptr;
+
     //==============================================================================
     // juce::AudioProcessorGraph *graph; 
     /* the graph that stores all instances and their connections.
@@ -132,22 +136,31 @@ private:
     */
     
     //==============================================================================
-    const int numPluginMenu = 5;
     const int numBand = 1;
 
+    //==============================================================================
     // TODO these stuff should not be managed by plugin processor
     juce::AudioPluginFormatManager *audioPluginFormatManager;
     juce::KnownPluginList *pluginLists;
-
-    // list of PluginLinkedList. Currently there will be only one element in the array.
-    juce::OwnedArray<PluginLinkedList> pluginLinkedLists;
-
     // the file that will be used in plugin scan to detect if plugin is dead.
     const juce::File deadVSTFiles = juce::File();
-
     // the plugin format to be scanned. Should be released after called delete.
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
 
+    //==============================================================================
+    juce::ReferenceCountedArray<Node> pluginList; // currently only one list
+    AudioProcessorGraph graph;
+    NodePtr audioInputNode = nullptr, audioOutputNode = nullptr;
+
+    //==============================================================================
+    void initGraph();
+    void updateGraph();
+
+    void __connect(NodePtr a, NodePtr b);
+    AudioProcessorGraph::Connection __gen_connection(NodePtr a, NodePtr b, int i);
+    // there's no disconnect!~ we will use graph.clear() / graph.removeConnection() to clear everything
+
+    //==============================================================================
     friend class RecursionTestAudioProcessorEditor;
     friend class PluginListPopupMenu;
 

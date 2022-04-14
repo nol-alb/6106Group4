@@ -43,21 +43,30 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
         juce::String nameOfNextPluginToBeScanned = scanner.getNextPluginFileThatWillBeScanned();
 
         if (nameOfNextPluginToBeScanned.contains(JucePlugin_Name)) {
-            scanner.skipNextFile();
-        }
-        try {
-            bool anyMoreFile = scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
+            bool anyMoreFile = scanner.skipNextFile();
             if (!anyMoreFile) {
                 break;
             }
         }
-        catch (std::exception ce) {
+        if (nameOfNextPluginToBeScanned.contains(juce::String("Mono"))) {
+            scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
+            break;
         }
+        else {
+            bool anyMoreFile = scanner.skipNextFile();
+            if (!anyMoreFile) {
+                break;
+            }
+        }
+    }
+    
+    juce::String errorString;
+    auto scannedPluginList = pluginLists->getTypes();
+    auto monoPluginDescription = scannedPluginList[0];
+    auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
+    NodePtr nodeOfPlugin = graph.addNode(std::move(pluginInstance));
 
-    };
-
-    // initialize the plugin linked lists. Currently we use only one linked list as there's no frequency splitting utilities (at least in this branch)
-    pluginLinkedLists.add(std::make_unique<PluginLinkedList>());
+    pluginList.add(nodeOfPlugin);
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -65,7 +74,7 @@ RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
     delete audioPluginFormatManager;
     delete pluginLists;
     delete pluginFormatToScan;
-    pluginLinkedLists.clear();
+    graph.clear();
 }
 
 //==============================================================================
@@ -136,15 +145,15 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->setPlayConfigDetails(
-            getMainBusNumInputChannels(),
-            getMainBusNumOutputChannels(),
-            sampleRate,
-            samplesPerBlock
-        );
-        pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
-    }
+    graph.setPlayConfigDetails(
+        getMainBusNumInputChannels(),
+        getMainBusNumOutputChannels(),
+        sampleRate,
+        samplesPerBlock
+    );
+    graph.prepareToPlay(sampleRate, samplesPerBlock);
+
+    initGraph();
 }
 
 void RecursionTestAudioProcessor::releaseResources()
@@ -152,9 +161,7 @@ void RecursionTestAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->releaseResources();
-    }
+    graph.releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -185,29 +192,26 @@ bool RecursionTestAudioProcessor::isBusesLayoutSupported (const BusesLayout& lay
 
 void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedNoDenormals noDenormals;
-    auto totalNumInputChannels  = getTotalNumInputChannels();
-    auto totalNumOutputChannels = getTotalNumOutputChannels();
-
     // clean junk channels
-    for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i) {
+    for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i) {
         buffer.clear(i, 0, buffer.getNumSamples());
     }
 
-    for (auto pluginLinkedList : pluginLinkedLists) {
-        pluginLinkedList->processBlock(buffer, midiMessages);
-    }
+    updateGraph();
+
+    graph.processBlock(buffer, midiMessages);
 }
 
 //==============================================================================
 bool RecursionTestAudioProcessor::hasEditor() const
 {
-    return true; // (change this to false if you choose to not supply an editor)
+    return false; // (change this to false if you choose to not supply an editor)
 }
 
 juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditor()
 {
-    return new RecursionTestAudioProcessorEditor (*this);
+    // return new RecursionTestAudioProcessorEditor (*this);
+    return nullptr;
 }
 
 //==============================================================================
@@ -228,33 +232,7 @@ void RecursionTestAudioProcessor::reset() {
 }
 
 //==============================================================================
-/*
-void RecursionTestAudioProcessor::setPluginAtIndex(int index, juce::PluginDescription& pluginDescription) {
-
-    // this function will be called when user choose from text button's popup menu.
-    // we need to get lock to update the internal graph.
-    juce::ScopedLock lock(getCallbackLock());
-
-    juce::AudioProcessorGraph::Node::Ptr pluginNode;
-    juce::String errorString;
-    auto scannedPluginList = pluginLists->getTypes();
-    auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
-    if (pluginInstance != nullptr) {
-        auto nodePtr = pluginLinkedLists[0]->get(index);
-        nodePtr->set(std::move(pluginInstance));
-        DBG("Plugin " << pluginDescription.name << " Loaded");
-    }
-    else {
-        DBG("Cannot load plugin" << pluginDescription.name << ", error message: " << errorString);
-    }
-}
-*/
-
 juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int index) {
-    auto nodePtr = pluginLinkedLists[0]->get(index);
-    if (nodePtr != nullptr && nodePtr->getProcessor() != nullptr) {
-        return nodePtr->getProcessor()->createEditorIfNeeded();
-    }
     return nullptr;
 }
 
@@ -263,4 +241,58 @@ juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new RecursionTestAudioProcessor();
+}
+
+void RecursionTestAudioProcessor::initGraph() {
+    for (auto connection : graph.getConnections()) {
+        graph.removeConnection(connection);
+    }
+    if (audioInputNode  != nullptr) graph.removeNode(audioInputNode->nodeID);
+    if (audioOutputNode != nullptr) graph.removeNode(audioOutputNode->nodeID);
+
+    audioInputNode  = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
+    audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
+    
+    __connect(audioInputNode, audioOutputNode);
+    
+    return;
+}
+
+void RecursionTestAudioProcessor::updateGraph() {
+    if (!pluginList.isEmpty()) {
+        for (auto connection : graph.getConnections()) {
+            graph.removeConnection(connection);
+        }
+
+        NodePtr lastNode = audioInputNode;
+        for (auto node : pluginList) {
+            node->getProcessor()->setPlayConfigDetails(getMainBusNumInputChannels(),
+                                                          getMainBusNumOutputChannels(),
+                                                          getSampleRate(), getBlockSize());
+            __connect(lastNode, node);
+            lastNode = node;
+        }
+
+        __connect(lastNode, audioOutputNode);
+
+        for (auto node : graph.getNodes()) {
+            node->getProcessor()->enableAllBuses();
+        }
+    }
+
+    return;
+}
+
+void RecursionTestAudioProcessor::__connect(NodePtr a, NodePtr b) {
+    for (int i = 0; i < 2; ++i) {
+        graph.addConnection(__gen_connection(a, b, i));
+    }
+}
+
+RecursionTestAudioProcessor::AudioProcessorGraph::Connection
+RecursionTestAudioProcessor::__gen_connection(NodePtr a, NodePtr b, int i) {
+    return AudioProcessorGraph::Connection({
+        AudioProcessorGraph::NodeAndChannel{ a->nodeID, i },
+        AudioProcessorGraph::NodeAndChannel{ b->nodeID, i }
+    });
 }
