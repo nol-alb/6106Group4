@@ -169,15 +169,10 @@ private:
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
 
     //==============================================================================
-    juce::Array<juce::ReferenceCountedArray<Node>*> pluginLists;
-    juce::Array<AudioProcessorGraph*> graphs;
-    juce::ReferenceCountedArray<Node> audioInputNodes, audioOutputNodes;
-
-    //==============================================================================
     void __prepareFilters(double sampleRate, int samplesPerBlock);
 
     //==============================================================================
-    PluginLinkedList pluginLinkedList;
+    std::list<PluginLinkedList*> pluginLinkedLists;
 
     //==============================================================================
     friend class RecursionTestAudioProcessorEditor;

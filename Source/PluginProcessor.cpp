@@ -84,22 +84,25 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     HP2.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
 
     //==============================================================================
-    // initialize graphs, each band has one corresponding graph.
-    // also initialize plugin lists.
-    for (int i = 0; i < numBand; ++i) {
-        graphs.add(new AudioProcessorGraph());
-        pluginLists.add(new juce::ReferenceCountedArray<Node>());
-        audioInputNodes.add(nullptr);
-        audioOutputNodes.add(nullptr);
-    }
+    // initialize pluginLinkedLists
+    for (int i = 0; i < numBand; ++i) pluginLinkedLists.emplace_back(new PluginLinkedList());
     
     //==============================================================================
     // insert plugins (temporary, should be replaced with UI)
     juce::String errorString;
-    auto scannedPluginList = pluginLists->getTypes();
+    auto scannedPluginList = knownPluginList->getTypes();
     auto monoPluginDescription = scannedPluginList[0];
-    auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
-    pluginLinkedList.append(std::move(pluginInstance));
+
+    {
+        int i = 0;
+        for (auto* pluginLinkedList : pluginLinkedLists) {
+            if (i != 1) {
+                auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
+                pluginLinkedList->append(std::move(pluginInstance));
+            }
+            ++i;
+        }
+    }
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -107,12 +110,10 @@ RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
     delete audioPluginFormatManager;
     delete knownPluginList;
     delete pluginFormatToScan;
-    for (auto& graph : graphs) { graph->clear(); }
-    for (auto& pluginList : pluginLists) { pluginList->clear(); }
-    graphs.clear();
-    pluginLists.clear();
-    audioInputNodes.clear();
-    audioOutputNodes.clear();
+    while (!pluginLinkedLists.empty()) {
+        delete pluginLinkedLists.front();
+        pluginLinkedLists.pop_front();
+    }
 }
 
 //==============================================================================
@@ -184,7 +185,9 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // initialisation that you need..
     __prepareFilters(sampleRate, samplesPerBlock);
 
-    pluginLinkedList.prepareToPlay(sampleRate, samplesPerBlock);
+    for (auto* pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->prepareToPlay(sampleRate, samplesPerBlock);
+    }
 }
 
 void RecursionTestAudioProcessor::releaseResources()
@@ -192,7 +195,9 @@ void RecursionTestAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 
-    pluginLinkedList.releaseResources();
+    for (auto* pluginLinkedList : pluginLinkedLists) {
+        pluginLinkedList->releaseResources();
+    }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -229,7 +234,7 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     }
 
     //==============================================================================
-    for ( auto& fb : filterBuffers ) {
+    for (auto& fb : filterBuffers) {
         fb = buffer;
     }
     
@@ -267,8 +272,12 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     HP2.process(fb2Ctx);
 
     //==============================================================================
-    for (int i = 0; i < numBand; ++i) {
-        pluginLinkedList.processBlock(buffer, midiMessages);
+    {
+        int i = 0;
+        for (auto* pluginLinkedList : pluginLinkedLists) {
+            pluginLinkedList->processBlock(filterBuffers[i], midiMessages);
+            ++i;
+        }
     }
 
     //==============================================================================

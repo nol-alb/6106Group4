@@ -18,6 +18,8 @@ PluginLinkedList::PluginLinkedList()
 }
 PluginLinkedList::~PluginLinkedList() {
     graph.clear();
+    audioInputNode.reset();
+    audioOutputNode.reset();
 }
 
 void PluginLinkedList::append(std::unique_ptr<AudioProcessor> processor) {
