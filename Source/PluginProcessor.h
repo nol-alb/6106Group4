@@ -25,6 +25,7 @@ j
 #define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
+#include "PluginLinkedList.h"
 
 //==============================================================================
 /**
@@ -77,11 +78,6 @@ public:
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
 private:
-    using AudioProcessorGraph = juce::AudioProcessorGraph;
-    using AudioGraphIOProcessor = AudioProcessorGraph::AudioGraphIOProcessor;
-    using Node = juce::AudioProcessorGraph::Node;
-    using NodePtr = Node::Ptr;
-
     //==============================================================================
     // juce::AudioProcessorGraph *graph; 
     /* the graph that stores all instances and their connections.
@@ -148,17 +144,7 @@ private:
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
 
     //==============================================================================
-    juce::ReferenceCountedArray<Node> pluginList; // currently only one list
-    AudioProcessorGraph graph;
-    NodePtr audioInputNode = nullptr, audioOutputNode = nullptr;
-
-    //==============================================================================
-    void initGraph();
-    void updateGraph();
-
-    void __connect(NodePtr a, NodePtr b);
-    AudioProcessorGraph::Connection __gen_connection(NodePtr a, NodePtr b, int i);
-    // there's no disconnect!~ we will use graph.clear() / graph.removeConnection() to clear everything
+    PluginLinkedList pluginLinkedList;
 
     //==============================================================================
     friend class RecursionTestAudioProcessorEditor;

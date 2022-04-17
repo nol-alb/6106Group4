@@ -64,9 +64,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     auto scannedPluginList = pluginLists->getTypes();
     auto monoPluginDescription = scannedPluginList[0];
     auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
-    NodePtr nodeOfPlugin = graph.addNode(std::move(pluginInstance));
-
-    pluginList.add(nodeOfPlugin);
+    pluginLinkedList.append(std::move(pluginInstance));
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -74,7 +72,6 @@ RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
     delete audioPluginFormatManager;
     delete pluginLists;
     delete pluginFormatToScan;
-    graph.clear();
 }
 
 //==============================================================================
@@ -145,15 +142,7 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
 
-    graph.setPlayConfigDetails(
-        getMainBusNumInputChannels(),
-        getMainBusNumOutputChannels(),
-        sampleRate,
-        samplesPerBlock
-    );
-    graph.prepareToPlay(sampleRate, samplesPerBlock);
-
-    initGraph();
+    pluginLinkedList.prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void RecursionTestAudioProcessor::releaseResources()
@@ -161,7 +150,7 @@ void RecursionTestAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 
-    graph.releaseResources();
+    pluginLinkedList.releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -196,10 +185,7 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
     for (auto i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i) {
         buffer.clear(i, 0, buffer.getNumSamples());
     }
-
-    updateGraph();
-
-    graph.processBlock(buffer, midiMessages);
+    pluginLinkedList.processBlock(buffer, midiMessages);
 }
 
 //==============================================================================
@@ -241,58 +227,4 @@ juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new RecursionTestAudioProcessor();
-}
-
-void RecursionTestAudioProcessor::initGraph() {
-    for (auto connection : graph.getConnections()) {
-        graph.removeConnection(connection);
-    }
-    if (audioInputNode  != nullptr) graph.removeNode(audioInputNode->nodeID);
-    if (audioOutputNode != nullptr) graph.removeNode(audioOutputNode->nodeID);
-
-    audioInputNode  = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
-    audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
-    
-    __connect(audioInputNode, audioOutputNode);
-    
-    return;
-}
-
-void RecursionTestAudioProcessor::updateGraph() {
-    if (!pluginList.isEmpty()) {
-        for (auto connection : graph.getConnections()) {
-            graph.removeConnection(connection);
-        }
-
-        NodePtr lastNode = audioInputNode;
-        for (auto node : pluginList) {
-            node->getProcessor()->setPlayConfigDetails(getMainBusNumInputChannels(),
-                                                          getMainBusNumOutputChannels(),
-                                                          getSampleRate(), getBlockSize());
-            __connect(lastNode, node);
-            lastNode = node;
-        }
-
-        __connect(lastNode, audioOutputNode);
-
-        for (auto node : graph.getNodes()) {
-            node->getProcessor()->enableAllBuses();
-        }
-    }
-
-    return;
-}
-
-void RecursionTestAudioProcessor::__connect(NodePtr a, NodePtr b) {
-    for (int i = 0; i < 2; ++i) {
-        graph.addConnection(__gen_connection(a, b, i));
-    }
-}
-
-RecursionTestAudioProcessor::AudioProcessorGraph::Connection
-RecursionTestAudioProcessor::__gen_connection(NodePtr a, NodePtr b, int i) {
-    return AudioProcessorGraph::Connection({
-        AudioProcessorGraph::NodeAndChannel{ a->nodeID, i },
-        AudioProcessorGraph::NodeAndChannel{ b->nodeID, i }
-    });
 }
