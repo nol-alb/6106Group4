@@ -25,6 +25,7 @@ j
 #define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
+#include "PluginLinkedList.h"
 namespace Params
 {
 //All parameters required for this plugin
@@ -102,11 +103,6 @@ public:
     APVTS apvts{ *this, nullptr, "Parameters",createParameterlayout() };
 
 private:
-    using AudioProcessorGraph = juce::AudioProcessorGraph;
-    using AudioGraphIOProcessor = AudioProcessorGraph::AudioGraphIOProcessor;
-    using Node = juce::AudioProcessorGraph::Node;
-    using NodePtr = Node::Ptr;
-
     //==============================================================================
     // juce::AudioProcessorGraph *graph; 
     /* the graph that stores all instances and their connections.
@@ -179,15 +175,9 @@ private:
 
     //==============================================================================
     void __prepareFilters(double sampleRate, int samplesPerBlock);
-    void __prepareGraphs(double sampleRate, int samplesPerBlock);
-    void __prepareGraph(AudioProcessorGraph& graph, NodePtr& audioInputNode, NodePtr& audioOutputNode, double sampleRate, int samplesPerBlock);
-    
-    void __initGraph(AudioProcessorGraph& graph, NodePtr& audioInputNode, NodePtr& audioOutputNode);
-    void __updateGraph(AudioProcessorGraph& graph, juce::ReferenceCountedArray<Node>& pluginList, NodePtr& audioInputNode, NodePtr& audioOutputNode);
 
-    void __connect(AudioProcessorGraph& graph, const NodePtr& a, const NodePtr& b);
-    AudioProcessorGraph::Connection __gen_connection(const NodePtr& a, const NodePtr& b, int i);
-    // there's no disconnect!~ we will use graph.clear() / graph.removeConnection() to clear everything
+    //==============================================================================
+    PluginLinkedList pluginLinkedList;
 
     //==============================================================================
     friend class RecursionTestAudioProcessorEditor;
@@ -206,7 +196,6 @@ private:
     //Create additional buffers so you don't lose any information after doing the low passing
     std::array<juce::AudioBuffer<float>, 3> filterBuffers;
     
-
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessor)
 };
 
