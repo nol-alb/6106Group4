@@ -71,6 +71,9 @@ private:
 
     //==============================================================================
     NodePtr __insertProcessor(std::unique_ptr<AudioProcessor> processor);
+
+    //==============================================================================
+    bool needToReconstructGraph = false;
 };
 
 #endif

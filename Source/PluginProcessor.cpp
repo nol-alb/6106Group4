@@ -49,9 +49,8 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                 break;
             }
         }
-        if (nameOfNextPluginToBeScanned.contains(juce::String("Mono"))) {
+        if (nameOfNextPluginToBeScanned.contains(juce::String("Mono")) || nameOfNextPluginToBeScanned.contains(juce::String("AutoPanner"))) {
             scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
-            break;
         }
         else {
             bool anyMoreFile = scanner.skipNextFile();
@@ -91,17 +90,22 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     // insert plugins (temporary, should be replaced with UI)
     juce::String errorString;
     auto scannedPluginList = knownPluginList->getTypes();
-    auto monoPluginDescription = scannedPluginList[0];
+    auto pluginDescription_a = scannedPluginList[0];
+    auto pluginDescription_b = scannedPluginList[1];
 
     {
-        int i = 0;
-        for (auto* pluginLinkedList : pluginLinkedLists) {
-            if (i != 1) {
-                auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
-                pluginLinkedList->append(std::move(pluginInstance));
-            }
-            ++i;
-        }
+        auto iter = pluginLinkedLists.begin();
+
+        auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
+        (*iter)->append(std::move(pluginInstance));
+        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
+        (*iter)->append(std::move(pluginInstance));
+        std::advance(iter, 2);
+
+        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
+        (*iter)->append(std::move(pluginInstance));
+        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
+        (*iter)->append(std::move(pluginInstance));
     }
 }
 

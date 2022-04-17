@@ -169,10 +169,12 @@ void PluginLinkedList::initGraph() {
     audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
     
     __connect(audioInputNode, audioOutputNode);
+
+    needToReconstructGraph = true;
 }
 
 void PluginLinkedList::updateGraph() {
-    if (!pluginList.isEmpty()) {
+    if (needToReconstructGraph && !pluginList.isEmpty()) {
         for (auto connection : graph.getConnections()) {
             graph.removeConnection(connection);
         }
@@ -191,6 +193,8 @@ void PluginLinkedList::updateGraph() {
         for (auto node : graph.getNodes()) {
             node->getProcessor()->enableAllBuses();
         }
+
+        needToReconstructGraph = false;
     }
 }
 
