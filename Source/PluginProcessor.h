@@ -25,6 +25,26 @@ j
 #define __hdr_PluginProcessor_h__
 
 #include <JuceHeader.h>
+namespace Params
+{
+//All parameters required for this plugin
+//Create a map that behaves as a lookup table for the string names we used in the layout in cpp processor file
+enum Names
+{
+    Low_Mid_Crossover_Freq,
+    Mid_High_Crossover_Freq,
+};
+
+inline const std::map<Names, juce::String>& GetParams()
+{
+   static std::map<Names, juce::String> params =
+    {
+        {Low_Mid_Crossover_Freq, "Low-Mid Crossover Freq"},
+        {Mid_High_Crossover_Freq, "Mid-High Crossover Freq"},
+    };
+    return params;
+}
+}
 
 //==============================================================================
 /**
@@ -75,6 +95,11 @@ public:
     //==============================================================================
     // void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
+
+    using APVTS = juce::AudioProcessorValueTreeState;
+    static APVTS::ParameterLayout createParameterlayout();
+    
+    APVTS apvts{ *this, nullptr, "Parameters",createParameterlayout() };
 
 private:
     using AudioProcessorGraph = juce::AudioProcessorGraph;
@@ -136,33 +161,51 @@ private:
     */
     
     //==============================================================================
-    const int numBand = 1;
+    static const int numBand = 3; // TODO change to variable
 
     //==============================================================================
     // TODO these stuff should not be managed by plugin processor
     juce::AudioPluginFormatManager *audioPluginFormatManager;
-    juce::KnownPluginList *pluginLists;
+    juce::KnownPluginList *knownPluginList;
     // the file that will be used in plugin scan to detect if plugin is dead.
     const juce::File deadVSTFiles = juce::File();
     // the plugin format to be scanned. Should be released after called delete.
     juce::VST3PluginFormat *pluginFormatToScan = new juce::VST3PluginFormat();
 
     //==============================================================================
-    juce::ReferenceCountedArray<Node> pluginList; // currently only one list
-    AudioProcessorGraph graph;
-    NodePtr audioInputNode = nullptr, audioOutputNode = nullptr;
+    juce::Array<juce::ReferenceCountedArray<Node>*> pluginLists;
+    juce::Array<AudioProcessorGraph*> graphs;
+    juce::ReferenceCountedArray<Node> audioInputNodes, audioOutputNodes;
 
     //==============================================================================
-    void initGraph();
-    void updateGraph();
+    void __prepareFilters(double sampleRate, int samplesPerBlock);
+    void __prepareGraphs(double sampleRate, int samplesPerBlock);
+    void __prepareGraph(AudioProcessorGraph& graph, NodePtr& audioInputNode, NodePtr& audioOutputNode, double sampleRate, int samplesPerBlock);
+    
+    void __initGraph(AudioProcessorGraph& graph, NodePtr& audioInputNode, NodePtr& audioOutputNode);
+    void __updateGraph(AudioProcessorGraph& graph, juce::ReferenceCountedArray<Node>& pluginList, NodePtr& audioInputNode, NodePtr& audioOutputNode);
 
-    void __connect(NodePtr a, NodePtr b);
-    AudioProcessorGraph::Connection __gen_connection(NodePtr a, NodePtr b, int i);
+    void __connect(AudioProcessorGraph& graph, const NodePtr& a, const NodePtr& b);
+    AudioProcessorGraph::Connection __gen_connection(const NodePtr& a, const NodePtr& b, int i);
     // there's no disconnect!~ we will use graph.clear() / graph.removeConnection() to clear everything
 
     //==============================================================================
     friend class RecursionTestAudioProcessorEditor;
     friend class PluginListPopupMenu;
+
+    //==============================================================================
+    using Filter = juce::dsp::LinkwitzRileyFilter<float>;
+         //fc0  fc1
+    Filter LP1, AP2,
+           HP1, LP2,
+                HP2;
+    
+    juce::AudioParameterFloat* lowMidCrossover { nullptr };
+    juce::AudioParameterFloat* midHighCrossover { nullptr };
+    
+    //Create additional buffers so you don't lose any information after doing the low passing
+    std::array<juce::AudioBuffer<float>, 3> filterBuffers;
+    
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessor)
 };

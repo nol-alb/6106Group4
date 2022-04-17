@@ -31,14 +31,15 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                                                    `createPluginInstance` below */
 
     // plugin list initialization
-    pluginLists = new juce::KnownPluginList();
+    knownPluginList = new juce::KnownPluginList();
 
     // prepare for scan
     juce::FileSearchPath pluginSearchPath("C:/Program Files/Common Files/VST3");
-    juce::PluginDirectoryScanner scanner(*pluginLists, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
+    juce::PluginDirectoryScanner scanner(*knownPluginList, *pluginFormatToScan, pluginSearchPath, false, deadVSTFiles, false);
 
     DBG("Trying to scan plugins");
 
+    // scan plugins
     while (true) {
         juce::String nameOfNextPluginToBeScanned = scanner.getNextPluginFileThatWillBeScanned();
 
@@ -59,22 +60,62 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
             }
         }
     }
-    
-    juce::String errorString;
-    auto scannedPluginList = pluginLists->getTypes();
-    auto monoPluginDescription = scannedPluginList[0];
-    auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
-    NodePtr nodeOfPlugin = graph.addNode(std::move(pluginInstance));
 
-    pluginList.add(nodeOfPlugin);
+    using namespace Params;
+    const auto& params = GetParams();
+    auto floatHelper = [&apvts = this->apvts, &params](auto& param, const auto& paramName) {
+        param = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(params.at(paramName)));
+        jassert(param != nullptr);
+    };
+    auto boolHelper = [&apvts = this->apvts, &params](auto& param, const auto& paramName) {
+        param = dynamic_cast<juce::AudioParameterBool*>(apvts.getParameter(params.at(paramName)));
+        jassert(param != nullptr);
+    };    
+
+    floatHelper(lowMidCrossover,Names::Low_Mid_Crossover_Freq);
+    floatHelper(midHighCrossover, Names::Mid_High_Crossover_Freq);
+
+    LP1.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP1.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+    
+    AP2.setType(juce::dsp::LinkwitzRileyFilterType::allpass);
+    
+    LP2.setType(juce::dsp::LinkwitzRileyFilterType::lowpass);
+    HP2.setType(juce::dsp::LinkwitzRileyFilterType::highpass);
+
+    //==============================================================================
+    // initialize graphs, each band has one corresponding graph.
+    // also initialize plugin lists.
+    for (int i = 0; i < numBand; ++i) {
+        graphs.add(new AudioProcessorGraph());
+        pluginLists.add(new juce::ReferenceCountedArray<Node>());
+        audioInputNodes.add(nullptr);
+        audioOutputNodes.add(nullptr);
+    }
+    
+    //==============================================================================
+    // insert plugins (temporary, should be replaced with UI)
+    juce::String errorString;
+    auto scannedPluginList = knownPluginList->getTypes();
+    auto monoPluginDescription = scannedPluginList[0];
+    for (int i = 0; i < numBand; ++i) {
+        auto pluginInstance = audioPluginFormatManager->createPluginInstance(monoPluginDescription, getSampleRate(), getBlockSize(), errorString);
+        NodePtr nodeOfPlugin = graphs[i]->addNode(std::move(pluginInstance));
+        pluginLists[i]->add(nodeOfPlugin);
+    }
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
 {
     delete audioPluginFormatManager;
-    delete pluginLists;
+    delete knownPluginList;
     delete pluginFormatToScan;
-    graph.clear();
+    for (auto& graph : graphs) { graph->clear(); }
+    for (auto& pluginList : pluginLists) { pluginList->clear(); }
+    graphs.clear();
+    pluginLists.clear();
+    audioInputNodes.clear();
+    audioOutputNodes.clear();
 }
 
 //==============================================================================
@@ -144,16 +185,8 @@ void RecursionTestAudioProcessor::prepareToPlay (double sampleRate, int samplesP
 {
     // Use this method as the place to do any pre-playback
     // initialisation that you need..
-
-    graph.setPlayConfigDetails(
-        getMainBusNumInputChannels(),
-        getMainBusNumOutputChannels(),
-        sampleRate,
-        samplesPerBlock
-    );
-    graph.prepareToPlay(sampleRate, samplesPerBlock);
-
-    initGraph();
+    __prepareFilters(sampleRate, samplesPerBlock);
+    __prepareGraphs(sampleRate, samplesPerBlock);
 }
 
 void RecursionTestAudioProcessor::releaseResources()
@@ -161,7 +194,9 @@ void RecursionTestAudioProcessor::releaseResources()
     // When playback stops, you can use this as an opportunity to free up any
     // spare memory, etc.
 
-    graph.releaseResources();
+    for (auto graph : graphs) {
+        graph->releaseResources();
+    }
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -197,9 +232,68 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
         buffer.clear(i, 0, buffer.getNumSamples());
     }
 
-    updateGraph();
+    //==============================================================================
+    for ( auto& fb : filterBuffers ) {
+        fb = buffer;
+    }
+    
+    auto lowMidCutoffFreq = lowMidCrossover->get();
+    LP1.setCutoffFrequency(lowMidCutoffFreq);
+    HP1.setCutoffFrequency(lowMidCutoffFreq);
+    
+    auto midHighCutoffFreq = midHighCrossover->get();
+    AP2.setCutoffFrequency(midHighCutoffFreq);
+    LP2.setCutoffFrequency(midHighCutoffFreq);
+    HP2.setCutoffFrequency(midHighCutoffFreq);
+    
+    auto fb0Block = juce::dsp::AudioBlock<float>(filterBuffers[0]);
+    auto fb1Block = juce::dsp::AudioBlock<float>(filterBuffers[1]);
+    auto fb2Block = juce::dsp::AudioBlock<float>(filterBuffers[2]);
 
-    graph.processBlock(buffer, midiMessages);
+    /*
+     Contains context information that is passed into an algorithm's process method.
+
+     This context is intended for use in situations where a single block is being used for both 
+     the input and output, so it will return the same object for both its getInputBlock() and getOutputBlock() methods.
+     **/
+    auto fb0Ctx = juce::dsp::ProcessContextReplacing<float>(fb0Block);
+    auto fb1Ctx = juce::dsp::ProcessContextReplacing<float>(fb1Block);
+    auto fb2Ctx = juce::dsp::ProcessContextReplacing<float>(fb2Block);
+    
+    //processing the audio
+    LP1.process(fb0Ctx);
+    AP2.process(fb0Ctx);
+    
+    HP1.process(fb1Ctx);
+    filterBuffers[2]=filterBuffers[1];
+    LP2.process(fb1Ctx);
+    
+    HP2.process(fb2Ctx);
+
+    //==============================================================================
+    for (int i = 0; i < numBand; ++i) {
+        __updateGraph(*graphs[i], *pluginLists[i], audioInputNodes[i], audioOutputNodes[i]);
+        graphs[i]->processBlock(filterBuffers[i], midiMessages);
+    }
+
+    //==============================================================================
+    auto numSamples = buffer.getNumSamples();
+    auto numChannels = buffer.getNumChannels();
+    
+    //clear the final buffer before feeding the input to it
+    buffer.clear();
+    
+    //Another lambda function to add each channel of the processed buffers into the output buffer
+    auto addFilterBand = [nc = numChannels, ns = numSamples](auto& inputBuffer, const auto& source) {
+        for (auto i = 0; i < nc; ++i) {
+            inputBuffer.addFrom(i, 0, source, i, 0, ns);
+        }
+    };
+
+    // sum buffer up
+    addFilterBand(buffer, filterBuffers[0]);
+    addFilterBand(buffer, filterBuffers[1]);
+    addFilterBand(buffer, filterBuffers[2]);
 }
 
 //==============================================================================
@@ -236,6 +330,20 @@ juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int
     return nullptr;
 }
 
+juce::AudioProcessorValueTreeState::ParameterLayout RecursionTestAudioProcessor::createParameterlayout()
+{
+    APVTS::ParameterLayout layout;
+    
+    using namespace juce;
+    using namespace Params;
+    const auto& params = GetParams();
+
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq),params.at(Names::Low_Mid_Crossover_Freq),NormalisableRange<float>(20,999, 1, 1), 400));
+    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq),params.at(Names::Mid_High_Crossover_Freq),NormalisableRange<float>(1000,20000, 1, 1), 2000));
+    
+    return layout;
+}
+
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
@@ -243,22 +351,80 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new RecursionTestAudioProcessor();
 }
 
-void RecursionTestAudioProcessor::initGraph() {
+void RecursionTestAudioProcessor::__prepareFilters(double sampleRate, int samplesPerBlock) {
+    juce::dsp::ProcessSpec spec;
+    spec.maximumBlockSize = samplesPerBlock;
+    spec.numChannels = getTotalNumOutputChannels();
+    spec.sampleRate = sampleRate;
+    
+    // TODO change to filter array
+    HP1.prepare(spec);
+    LP1.prepare(spec);
+    AP2.prepare(spec);
+    LP2.prepare(spec);
+    HP2.prepare(spec);
+    
+    for(auto& buffer: filterBuffers)
+    {
+        buffer.setSize(spec.numChannels, samplesPerBlock);
+    }
+}
+
+void RecursionTestAudioProcessor::__prepareGraphs(double sampleRate, int samplesPerBlock) {
+
+    for (int i = 0; i < numBand; ++i) {
+        NodePtr audioInputNode = audioInputNodes[i];
+        __prepareGraph(
+            *graphs[i], 
+            audioInputNodes[i], 
+            audioOutputNodes[i],
+            sampleRate,
+            samplesPerBlock
+        );
+        audioInputNode->nodeID;
+    }
+}
+
+void RecursionTestAudioProcessor::__prepareGraph(
+    AudioProcessorGraph& graph, 
+    NodePtr& audioInputNode, 
+    NodePtr& audioOutputNode, 
+    double sampleRate, 
+    int samplesPerBlock
+) {
+    graph.setPlayConfigDetails(
+        getMainBusNumInputChannels(),
+        getMainBusNumOutputChannels(),
+        sampleRate,
+        samplesPerBlock
+    );
+    graph.prepareToPlay(sampleRate, samplesPerBlock);
+
+    __initGraph(graph, audioInputNode, audioOutputNode);
+}
+
+void RecursionTestAudioProcessor::__initGraph(AudioProcessorGraph& graph, NodePtr& audioInputNode, NodePtr& audioOutputNode) {
     for (auto connection : graph.getConnections()) {
         graph.removeConnection(connection);
     }
     if (audioInputNode  != nullptr) graph.removeNode(audioInputNode->nodeID);
     if (audioOutputNode != nullptr) graph.removeNode(audioOutputNode->nodeID);
 
+
     audioInputNode  = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
     audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
     
-    __connect(audioInputNode, audioOutputNode);
+    __connect(graph, audioInputNode, audioOutputNode);
     
     return;
 }
 
-void RecursionTestAudioProcessor::updateGraph() {
+void RecursionTestAudioProcessor::__updateGraph(
+    AudioProcessorGraph& graph, 
+    juce::ReferenceCountedArray<Node>& pluginList, 
+    NodePtr& audioInputNode, 
+    NodePtr& audioOutputNode
+) {
     if (!pluginList.isEmpty()) {
         for (auto connection : graph.getConnections()) {
             graph.removeConnection(connection);
@@ -269,28 +435,26 @@ void RecursionTestAudioProcessor::updateGraph() {
             node->getProcessor()->setPlayConfigDetails(getMainBusNumInputChannels(),
                                                           getMainBusNumOutputChannels(),
                                                           getSampleRate(), getBlockSize());
-            __connect(lastNode, node);
+            __connect(graph, lastNode, node);
             lastNode = node;
         }
 
-        __connect(lastNode, audioOutputNode);
+        __connect(graph, lastNode, audioOutputNode);
 
         for (auto node : graph.getNodes()) {
             node->getProcessor()->enableAllBuses();
         }
     }
-
-    return;
 }
 
-void RecursionTestAudioProcessor::__connect(NodePtr a, NodePtr b) {
+void RecursionTestAudioProcessor::__connect(AudioProcessorGraph& graph, const NodePtr& a, const NodePtr& b) {
     for (int i = 0; i < 2; ++i) {
         graph.addConnection(__gen_connection(a, b, i));
     }
 }
 
 RecursionTestAudioProcessor::AudioProcessorGraph::Connection
-RecursionTestAudioProcessor::__gen_connection(NodePtr a, NodePtr b, int i) {
+RecursionTestAudioProcessor::__gen_connection(const NodePtr& a, const NodePtr& b, int i) {
     return AudioProcessorGraph::Connection({
         AudioProcessorGraph::NodeAndChannel{ a->nodeID, i },
         AudioProcessorGraph::NodeAndChannel{ b->nodeID, i }

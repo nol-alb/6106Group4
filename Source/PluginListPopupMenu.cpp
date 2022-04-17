@@ -45,13 +45,13 @@ void PluginListPopupMenu::updateTextButtonPopupMenu() {
     m->clear();
     juce::KnownPluginList::addToMenu(
         *m,
-        this->audioProcessor.pluginLists->getTypes(),
+        this->audioProcessor.knownPluginList->getTypes(),
         juce::KnownPluginList::SortMethod::sortAlphabetically
     );
     textButton->onClick = [this]{
         m->showMenuAsync(juce::PopupMenu::Options().withTargetComponent(textButton),
             [this](int res) mutable {
-                auto types = this->audioProcessor.pluginLists->getTypes();
+                auto types = this->audioProcessor.knownPluginList->getTypes();
                 int index = juce::KnownPluginList::getIndexChosenByMenu(types, res);
 
                 if (0 <= index && index < types.size()) {
