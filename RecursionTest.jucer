@@ -4,16 +4,19 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="o1GDCI" name="RecursionTest">
     <GROUP id="{2DCE1169-3AB2-7276-C7D8-FB12DBE13E5F}" name="Source">
+      <FILE id="RdhPvQ" name="PluginWrapperComponent.cpp" compile="1" resource="0"
+            file="Source/PluginWrapperComponent.cpp"/>
+      <FILE id="tIZzCO" name="PluginWrapperComponent.h" compile="0" resource="0"
+            file="Source/PluginWrapperComponent.h"/>
+      <FILE id="SlY7J0" name="BandComponent.cpp" compile="1" resource="0"
+            file="Source/BandComponent.cpp"/>
+      <FILE id="vcS5ri" name="BandComponent.h" compile="0" resource="0" file="Source/BandComponent.h"/>
       <FILE id="aVNR2p" name="PluginLinkedList.cpp" compile="1" resource="0"
             file="Source/PluginLinkedList.cpp"/>
       <FILE id="M094qD" name="PluginLinkedList.h" compile="0" resource="0"
             file="Source/PluginLinkedList.h"/>
       <FILE id="fML9ZV" name="PluginListPopupMenu.cpp" compile="1" resource="0"
             file="Source/PluginListPopupMenu.cpp"/>
-      <FILE id="VfksB6" name="PluginPluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginPluginEditor.cpp"/>
-      <FILE id="Yoe5ik" name="PluginPluginEditor.h" compile="0" resource="0"
-            file="Source/PluginPluginEditor.h"/>
       <FILE id="HU9QIV" name="PluginListPopupMenu.h" compile="0" resource="0"
             file="Source/PluginListPopupMenu.h"/>
       <FILE id="xRKpHQ" name="PluginProcessor.cpp" compile="1" resource="0"
