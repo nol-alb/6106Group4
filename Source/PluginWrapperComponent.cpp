@@ -8,9 +8,9 @@
   ==============================================================================
 */
 
-#include "PluginPluginEditor.h"
+#include "PluginWrapperComponent.h"
 
-void VSTPluginEditorWrapper::userTriedToCloseWindow() {
+void PluginWrapperComponent::userTriedToCloseWindow() {
     if (isOnDesktop()) {
         setVisible(false);
     }

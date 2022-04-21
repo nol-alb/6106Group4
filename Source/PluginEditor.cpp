@@ -36,13 +36,14 @@ RecursionTestAudioProcessorEditor::RecursionTestAudioProcessorEditor (RecursionT
     // one vector for each popup menu
     for (int i = 0; i < audioProcessor.numBand; ++i) {
         pluginListPopupMenus.emplace_back(new std::list<PluginListPopupMenu*>);
+
+        appendPluginButtons.emplace_back(new juce::TextButton("I SAID ADD PLUGIN!"));
+        appendPluginButtons[i]->onClick = [this] {
+            // TODO implement this (issue #23, Phase 2)
+        };
     }
 
-    // initialize text buttons
-    // look at the lambda callback function in PluginListPopupMenu to see how the plugin is placed
-    // new PluginListPopupMenu(i, audioProcessor)
-    // addAndMakeVisible(*pluginListPopupMenus[i]);
-    // audioProcessor.pluginLists->addChangeListener(static_cast<juce::ChangeListener*>(pluginListPopupMenus[i]));
+
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
