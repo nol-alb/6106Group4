@@ -35,6 +35,10 @@ private:
     juce::OwnedArray<BandComponent> bands;
     juce::OwnedArray<juce::Slider> sliders;
 
+    // slider attachments
+    using APVTS = juce::AudioProcessorValueTreeState;
+    juce::OwnedArray<APVTS::SliderAttachment> sliderAttachments;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessorEditor)
 };
 

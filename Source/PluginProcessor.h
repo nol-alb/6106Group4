@@ -26,6 +26,7 @@ j
 
 #include <JuceHeader.h>
 #include "PluginLinkedList.h"
+
 namespace Params
 {
 //All parameters required for this plugin

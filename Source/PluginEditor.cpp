@@ -38,11 +38,20 @@ RecursionTestAudioProcessorEditor::RecursionTestAudioProcessorEditor (RecursionT
         addAndMakeVisible(bands.add(new BandComponent()));
     }
 
+    auto& params = Params::GetParams();
+
     // initialize sliders for band split frequencies
-    for (int i = 0; i < 2; ++i) {
-        addAndMakeVisible(sliders.add(new juce::Slider()));
-        sliders.getLast()->setTextBoxStyle(juce::Slider::TextEntryBoxPosition::NoTextBox, true, 0, 0);
-    }
+    auto slider = sliders.add(new juce::Slider());
+    addAndMakeVisible(*slider);
+    slider->setRange(20, 1000);
+    slider->setTextValueSuffix(" Hz");
+    sliderAttachments.add(new APVTS::SliderAttachment(audioProcessor.apvts, params.at(Params::Names::Low_Mid_Crossover_Freq), *slider));
+
+    slider = sliders.add(new juce::Slider());
+    addAndMakeVisible(*slider);
+    slider->setRange(1000, 20000);
+    slider->setTextValueSuffix(" Hz");
+    sliderAttachments.add(new APVTS::SliderAttachment(audioProcessor.apvts, params.at(Params::Names::Mid_High_Crossover_Freq), *slider));
 
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
