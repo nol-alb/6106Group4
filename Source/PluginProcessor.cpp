@@ -307,13 +307,12 @@ void RecursionTestAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer
 //==============================================================================
 bool RecursionTestAudioProcessor::hasEditor() const
 {
-    return false; // (change this to false if you choose to not supply an editor)
+    return true; // (change this to false if you choose to not supply an editor)
 }
 
 juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditor()
 {
-    // return new RecursionTestAudioProcessorEditor (*this);
-    return nullptr;
+    return new RecursionTestAudioProcessorEditor (*this);
 }
 
 //==============================================================================

@@ -11,6 +11,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "BandComponent.h"
 
 //==============================================================================
 /**
@@ -31,10 +32,8 @@ private:
     RecursionTestAudioProcessor& audioProcessor;
 
     // GUI things
-    // std::vector<std::list<PluginListPopupMenu*>*> pluginListPopupMenus;
-
-    // Huge "ADD PLUGIN!" button
-    std::vector<juce::Button*> appendPluginButtons;
+    juce::OwnedArray<BandComponent> bands;
+    juce::OwnedArray<juce::Slider> sliders;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (RecursionTestAudioProcessorEditor)
 };
