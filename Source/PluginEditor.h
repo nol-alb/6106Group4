@@ -35,6 +35,9 @@ private:
     juce::OwnedArray<BandComponent> bands;
     juce::OwnedArray<juce::Slider> sliders;
 
+    // height ratio for sliders / spectrum & bands
+    float sliderHeightRatio = 0.2f;
+
     // slider attachments
     using APVTS = juce::AudioProcessorValueTreeState;
     juce::OwnedArray<APVTS::SliderAttachment> sliderAttachments;

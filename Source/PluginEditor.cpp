@@ -85,16 +85,16 @@ void RecursionTestAudioProcessorEditor::resized()
     juce::FlexBox bandsFlexBox;
 
     for (auto* bandComponent : bands) {
-        juce::FlexItem currentBandComponentFlexItem(w_each_band, 0.8f * h, *bandComponent);
+        juce::FlexItem currentBandComponentFlexItem(w_each_band, (1 - sliderHeightRatio) * h, *bandComponent);
         bandsFlexBox.items.add(currentBandComponentFlexItem);
     }
 
     for (auto* slider : sliders) {
         slider->setSliderStyle (juce::Slider::SliderStyle::LinearHorizontal);
-        juce::FlexItem currentSliderFlexItem(w_each_slider, 0.2f * h, *slider);
+        juce::FlexItem currentSliderFlexItem(w_each_slider, sliderHeightRatio * h, *slider);
         splitFreqSliderFlexBox.items.add(currentSliderFlexItem);
     }
 
-    splitFreqSliderFlexBox.performLayout(bounds.removeFromTop(0.2f * h));
+    splitFreqSliderFlexBox.performLayout(bounds.removeFromTop(sliderHeightRatio * h));
     bandsFlexBox.performLayout(bounds);
 }
