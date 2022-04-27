@@ -18,8 +18,13 @@ PluginWrapperComponent::~PluginWrapperComponent() {
 }
 
 void PluginWrapperComponent::paint(juce::Graphics& g) {
-    g.setColour(juce::Colours::blue);
+    g.fillAll(juce::Colours::darkgrey);
+
+    g.setColour(juce::Colours::white);
     g.drawRoundedRectangle(0, 0, getWidth(), getHeight(), 5, 1);
+
+    g.setFont(14.0f);
+    g.drawText(pluginName, getLocalBounds(), juce::Justification::centred, true);
 }
 
 void PluginWrapperComponent::resized() {
