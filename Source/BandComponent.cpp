@@ -12,11 +12,7 @@
 
 BandComponent::BandComponent(PluginLinkedList* list) {
     pluginLinkedList = list;
-
-    addAndMakeVisible(pluginWrapperComponents.add(new PluginWrapperComponent("1")));
-    addAndMakeVisible(pluginWrapperComponents.add(new PluginWrapperComponent("2")));
-
-    // __updatePluginWrapperComponents();
+    __updatePluginWrapperComponents();
 }
 
 BandComponent::~BandComponent() {
@@ -27,7 +23,11 @@ BandComponent::~BandComponent() {
 void BandComponent::__updatePluginWrapperComponents() {
     if (!pluginWrapperComponents.isEmpty()) pluginWrapperComponents.clear();
     for (auto nodePtr : pluginLinkedList->pluginList) {
-        pluginWrapperComponents.add(new PluginWrapperComponent(nodePtr->getProcessor()->getName()));
+        addAndMakeVisible(
+            pluginWrapperComponents.add(
+                new PluginWrapperComponent(nodePtr->getProcessor()->getName())
+            )
+        );
     }
 }
 
@@ -43,7 +43,7 @@ void BandComponent::resized() {
 
     juce::FlexBox pluginWrapperComponentFlexBox;
     for (auto wrappedPlugin : pluginWrapperComponents) {
-        pluginWrapperComponentFlexBox.items.add(juce::FlexItem(getWidth(), getHeight() * pluginHeightRatio, *wrappedPlugin));
+        pluginWrapperComponentFlexBox.items.add(juce::FlexItem(w, h, *wrappedPlugin));
     }
     pluginWrapperComponentFlexBox.flexDirection = juce::FlexBox::Direction::column;
     pluginWrapperComponentFlexBox.performLayout(localBounds);
