@@ -15,7 +15,13 @@
 
 class PluginWrapperComponent : public juce::Component {
 public:
-    void userTriedToCloseWindow() override;
+    PluginWrapperComponent(const juce::String& name);
+    ~PluginWrapperComponent();
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+private:
+    juce::String pluginName;
 };
 
 #endif // __hdr_PluginWrapperComponent_h__

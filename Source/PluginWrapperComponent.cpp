@@ -10,8 +10,18 @@
 
 #include "PluginWrapperComponent.h"
 
-void PluginWrapperComponent::userTriedToCloseWindow() {
-    if (isOnDesktop()) {
-        setVisible(false);
-    }
+PluginWrapperComponent::PluginWrapperComponent(const juce::String& name) {
+    pluginName = name; // copy initialization
+}
+
+PluginWrapperComponent::~PluginWrapperComponent() {
+}
+
+void PluginWrapperComponent::paint(juce::Graphics& g) {
+    g.setColour(juce::Colours::blue);
+    g.drawRoundedRectangle(0, 0, getWidth(), getHeight(), 5, 1);
+}
+
+void PluginWrapperComponent::resized() {
+
 }

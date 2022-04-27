@@ -10,10 +10,25 @@
 
 #include "BandComponent.h"
 
-BandComponent::BandComponent() {
+BandComponent::BandComponent(PluginLinkedList* list) {
+    pluginLinkedList = list;
+
+    addAndMakeVisible(pluginWrapperComponents.add(new PluginWrapperComponent("1")));
+    addAndMakeVisible(pluginWrapperComponents.add(new PluginWrapperComponent("2")));
+
+    // __updatePluginWrapperComponents();
 }
 
 BandComponent::~BandComponent() {
+    // pluginList is not initialized in this class, thus not deleting it
+    pluginWrapperComponents.clear();
+}
+
+void BandComponent::__updatePluginWrapperComponents() {
+    if (!pluginWrapperComponents.isEmpty()) pluginWrapperComponents.clear();
+    for (auto nodePtr : pluginLinkedList->pluginList) {
+        pluginWrapperComponents.add(new PluginWrapperComponent(nodePtr->getProcessor()->getName()));
+    }
 }
 
 void BandComponent::paint(juce::Graphics& g) {
@@ -22,4 +37,14 @@ void BandComponent::paint(juce::Graphics& g) {
 }
 
 void BandComponent::resized() {
+    int w = getWidth();
+    float h = getHeight() * pluginHeightRatio;
+    auto localBounds = getLocalBounds();
+
+    juce::FlexBox pluginWrapperComponentFlexBox;
+    for (auto wrappedPlugin : pluginWrapperComponents) {
+        pluginWrapperComponentFlexBox.items.add(juce::FlexItem(getWidth(), getHeight() * pluginHeightRatio, *wrappedPlugin));
+    }
+    pluginWrapperComponentFlexBox.flexDirection = juce::FlexBox::Direction::column;
+    pluginWrapperComponentFlexBox.performLayout(localBounds);
 }

@@ -74,6 +74,8 @@ private:
 
     //==============================================================================
     bool needToReconstructGraph = false;
+
+    friend class BandComponent;
 };
 
 #endif

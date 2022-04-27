@@ -34,8 +34,9 @@ RecursionTestAudioProcessorEditor::RecursionTestAudioProcessorEditor (RecursionT
     */
 
     // initialize band component for each band
-    for (int i = 0; i < audioProcessor.numBand; ++i) {
-        addAndMakeVisible(bands.add(new BandComponent()));
+    auto iter = audioProcessor.pluginLinkedLists.begin();
+    for (int i = 0; i < audioProcessor.numBand; ++i, ++iter) {
+        addAndMakeVisible(bands.add(new BandComponent(*iter)));
     }
 
     auto& params = Params::GetParams();
