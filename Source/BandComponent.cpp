@@ -12,6 +12,8 @@
 
 BandComponent::BandComponent(PluginLinkedList* list) {
     pluginLinkedList = list;
+    pluginComponentViewport.setScrollBarsShown(true, false, true, true);
+
     __updatePluginWrapperComponents();
 }
 
@@ -23,10 +25,8 @@ BandComponent::~BandComponent() {
 void BandComponent::__updatePluginWrapperComponents() {
     if (!pluginComponents.isEmpty()) pluginComponents.clear();
     for (auto nodePtr : pluginLinkedList->pluginList) {
-        addAndMakeVisible(
-            pluginComponents.add(
-                new PluginComponent(nodePtr)
-            )
+        pluginComponents.add(
+            new PluginComponent(nodePtr)
         );
     }
 }
@@ -41,10 +41,20 @@ void BandComponent::resized() {
     float h = getHeight() * pluginHeightRatio;
     auto localBounds = getLocalBounds();
 
+    pluginComponentContainer.removeAllChildren();
+
     juce::FlexBox pluginWrapperComponentFlexBox;
     for (auto wrappedPlugin : pluginComponents) {
         pluginWrapperComponentFlexBox.items.add(juce::FlexItem(w, h, *wrappedPlugin));
+        pluginComponentContainer.addAndMakeVisible(*wrappedPlugin);
     }
     pluginWrapperComponentFlexBox.flexDirection = juce::FlexBox::Direction::column;
-    pluginWrapperComponentFlexBox.performLayout(localBounds);
+
+    auto fullComponentBound = juce::Rectangle<int>(w, h * pluginComponents.size());
+    pluginWrapperComponentFlexBox.performLayout(fullComponentBound);
+    pluginComponentContainer.setBounds(fullComponentBound);
+
+    pluginComponentViewport.setBounds(localBounds);
+    pluginComponentViewport.setViewedComponent(&pluginComponentContainer, false);
+    addAndMakeVisible(pluginComponentViewport);
 }

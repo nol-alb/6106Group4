@@ -27,9 +27,11 @@ private:
     //==============================================================================
     juce::OwnedArray<PluginComponent> pluginComponents;
     PluginLinkedList* pluginLinkedList;
+    juce::Component pluginComponentContainer;
+    juce::Viewport pluginComponentViewport;
 
     //==============================================================================
-    const float pluginHeightRatio = 1.f / 10.f;
+    const float pluginHeightRatio = 1.f / 1.5f;
 
     //==============================================================================
     void __updatePluginWrapperComponents();
