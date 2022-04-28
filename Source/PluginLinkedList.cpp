@@ -24,6 +24,7 @@ PluginLinkedList::~PluginLinkedList() {
 
 void PluginLinkedList::append(std::unique_ptr<AudioProcessor> processor) {
     pluginList.add(__insertProcessor(std::move(processor)));
+    needToReconstructGraph = true;
 }
 
 // void PluginLinkedList::appendLeft(std::unique_ptr<AudioProcessor> processor) {

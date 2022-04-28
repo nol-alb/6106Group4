@@ -49,7 +49,11 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                 break;
             }
         }
-        if (nameOfNextPluginToBeScanned.contains(juce::String("SPAN")) || nameOfNextPluginToBeScanned.contains(juce::String("Rift"))) {
+        if (nameOfNextPluginToBeScanned.contains(juce::String("SPAN")) || 
+            nameOfNextPluginToBeScanned.contains(juce::String("Rift")) || 
+            nameOfNextPluginToBeScanned.contains(juce::String("AutoPanner")) ||
+            nameOfNextPluginToBeScanned.contains(juce::String("Mono"))
+        ) {
             scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
         }
         else {
@@ -88,25 +92,25 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     
     //==============================================================================
     // insert plugins (temporary, should be replaced with UI)
-    juce::String errorString;
-    auto scannedPluginList = knownPluginList->getTypes();
-    auto pluginDescription_a = scannedPluginList[0];
-    auto pluginDescription_b = scannedPluginList[1];
+    // juce::String errorString;
+    // auto scannedPluginList = knownPluginList->getTypes();
+    // auto pluginDescription_a = scannedPluginList[0];
+    // auto pluginDescription_b = scannedPluginList[1];
 
-    {
-        auto iter = pluginLinkedLists.begin();
+    // {
+    //     auto iter = pluginLinkedLists.begin();
 
-        auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
-        (*iter)->append(std::move(pluginInstance));
-        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
-        (*iter)->append(std::move(pluginInstance));
-        std::advance(iter, 2);
+    //     auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
+    //     (*iter)->append(std::move(pluginInstance));
+    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
+    //     (*iter)->append(std::move(pluginInstance));
+    //     std::advance(iter, 2);
 
-        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
-        (*iter)->append(std::move(pluginInstance));
-        pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
-        (*iter)->append(std::move(pluginInstance));
-    }
+    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
+    //     (*iter)->append(std::move(pluginInstance));
+    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
+    //     (*iter)->append(std::move(pluginInstance));
+    // }
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -330,6 +334,15 @@ void RecursionTestAudioProcessor::setStateInformation (const void* data, int siz
 }
 
 void RecursionTestAudioProcessor::reset() {
+}
+
+void RecursionTestAudioProcessor::updateMenu(juce::PopupMenu& menu) {
+    juce::KnownPluginList::addToMenu(menu, knownPluginList->getTypes(), juce::KnownPluginList::SortMethod::sortAlphabetically);
+}
+
+std::unique_ptr<juce::AudioProcessor> RecursionTestAudioProcessor::createPlugin(juce::PluginDescription& pluginDescription) {
+    juce::String errorString;
+    return audioPluginFormatManager->createPluginInstance(pluginDescription, getSampleRate(), getBlockSize(), errorString);
 }
 
 //==============================================================================

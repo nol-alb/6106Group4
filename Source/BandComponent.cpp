@@ -14,11 +14,12 @@ BandComponent::BandComponent(PluginLinkedList* list) {
     pluginLinkedList = list;
     pluginComponentViewport.setScrollBarsShown(true, false, true, true);
 
+    __initializeAddPluginButton();
     __updatePluginWrapperComponents();
 }
 
 BandComponent::~BandComponent() {
-    // pluginList is not initialized in this class, thus not deleting it
+    // pluginLinkedList is not initialized in this class, thus not deleting it
     pluginComponents.clear();
 }
 
@@ -31,6 +32,28 @@ void BandComponent::__updatePluginWrapperComponents() {
     }
 }
 
+void BandComponent::__initializeAddPluginButton() {
+    audioProcessor.updateMenu(pluginMenu);
+
+    addAndMakeVisible(addPluginButton);
+    addPluginButton.onClick = [this] {
+        pluginMenu.showMenuAsync(
+            juce::PopupMenu::Options().withTargetComponent(addPluginButton),
+            [this](int res) mutable {
+                auto types = audioProcessor.knownPluginList->getTypes();
+                int index = juce::KnownPluginList::getIndexChosenByMenu(types, res);
+                
+                if (0 <= index && index < types.size()) {
+                    auto pluginDescription = types[index];
+                    pluginLinkedList->append(std::move(audioProcessor.createPlugin(pluginDescription)));
+                    __updatePluginWrapperComponents();
+                    resized();
+                }
+            }
+        );
+    };
+}
+
 void BandComponent::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::orange);
     g.drawRoundedRectangle(0, 0, getWidth(), getHeight(), 5, 2);
@@ -38,23 +61,28 @@ void BandComponent::paint(juce::Graphics& g) {
 
 void BandComponent::resized() {
     int w = getWidth();
-    float h = getHeight() * pluginHeightRatio;
-    auto localBounds = getLocalBounds();
+    int h = getHeight();
+    float h_plugin_height = h * pluginHeightRatio;
+    float h_button_height = h * buttonHeightRatio;
+    auto viewportLocalBounds = getLocalBounds().removeFromTop(h - h_button_height);
+    auto buttonLocalBounds = getLocalBounds().removeFromBottom(h_button_height);
 
     pluginComponentContainer.removeAllChildren();
 
     juce::FlexBox pluginWrapperComponentFlexBox;
     for (auto wrappedPlugin : pluginComponents) {
-        pluginWrapperComponentFlexBox.items.add(juce::FlexItem(w, h, *wrappedPlugin));
+        pluginWrapperComponentFlexBox.items.add(juce::FlexItem(w, h_plugin_height, *wrappedPlugin));
         pluginComponentContainer.addAndMakeVisible(*wrappedPlugin);
     }
     pluginWrapperComponentFlexBox.flexDirection = juce::FlexBox::Direction::column;
 
-    auto fullComponentBound = juce::Rectangle<int>(w, h * pluginComponents.size());
+    auto fullComponentBound = juce::Rectangle<int>(w, h_plugin_height * pluginComponents.size());
     pluginWrapperComponentFlexBox.performLayout(fullComponentBound);
     pluginComponentContainer.setBounds(fullComponentBound);
 
-    pluginComponentViewport.setBounds(localBounds);
+    pluginComponentViewport.setBounds(viewportLocalBounds);
     pluginComponentViewport.setViewedComponent(&pluginComponentContainer, false);
     addAndMakeVisible(pluginComponentViewport);
+
+    addPluginButton.setBounds(buttonLocalBounds);
 }

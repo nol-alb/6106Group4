@@ -6,6 +6,7 @@
 #include "PluginPluginManager.h"
 #include "PluginLinkedList.h"
 #include "PluginComponent.h"
+#include "BandComponent.h"
 #include "PluginListPopupMenu.h"
 
 #endif // __hdr_PluginInclude_h__

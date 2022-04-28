@@ -95,6 +95,10 @@ public:
     void reset() override;
 
     //==============================================================================
+    void updateMenu(juce::PopupMenu& menu);
+    std::unique_ptr<juce::AudioProcessor> createPlugin(juce::PluginDescription& pluginDescription);
+
+    //==============================================================================
     // void setPluginAtIndex(int index, juce::PluginDescription& pluginDescription);
     juce::AudioProcessorEditor* createEditorAtIndex(int index);
 
@@ -178,6 +182,7 @@ private:
     //==============================================================================
     friend class RecursionTestAudioProcessorEditor;
     friend class PluginListPopupMenu;
+    friend class BandComponent;
 
     //==============================================================================
     using Filter = juce::dsp::LinkwitzRileyFilter<float>;

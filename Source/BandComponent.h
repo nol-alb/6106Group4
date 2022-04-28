@@ -13,7 +13,7 @@
 
 #include <JuceHeader.h>
 #include "PluginComponent.h"
-#include "PluginLinkedList.h"
+#include "PluginProcessor.h"
 
 class BandComponent : public juce::Component {
 public:
@@ -31,10 +31,19 @@ private:
     juce::Viewport pluginComponentViewport;
 
     //==============================================================================
-    const float pluginHeightRatio = 1.f / 1.5f;
+    juce::TextButton addPluginButton{"Append Plugin"};
+    juce::PopupMenu pluginMenu;
+
+    //==============================================================================
+    RecursionTestAudioProcessor audioProcessor;
+
+    //==============================================================================
+    const float pluginHeightRatio = 1.f / 10.f;
+    const float buttonHeightRatio = 1.f / 10.f;
 
     //==============================================================================
     void __updatePluginWrapperComponents();
+    void __initializeAddPluginButton();
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BandComponent)
