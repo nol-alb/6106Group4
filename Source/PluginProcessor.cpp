@@ -49,7 +49,7 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
                 break;
             }
         }
-        if (nameOfNextPluginToBeScanned.contains(juce::String("Mono")) || nameOfNextPluginToBeScanned.contains(juce::String("AutoPanner"))) {
+        if (nameOfNextPluginToBeScanned.contains(juce::String("SPAN")) || nameOfNextPluginToBeScanned.contains(juce::String("Rift"))) {
             scanner.scanNextFile(true, nameOfNextPluginToBeScanned);
         }
         else {

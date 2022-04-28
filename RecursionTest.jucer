@@ -4,10 +4,9 @@
               addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
   <MAINGROUP id="o1GDCI" name="RecursionTest">
     <GROUP id="{2DCE1169-3AB2-7276-C7D8-FB12DBE13E5F}" name="Source">
-      <FILE id="mTPG8n" name="PluginEditorComponent.cpp" compile="1" resource="0"
-            file="Source/PluginEditorComponent.cpp"/>
-      <FILE id="FjzDGr" name="PluginEditorComponent.h" compile="0" resource="0"
-            file="Source/PluginEditorComponent.h"/>
+      <FILE id="mTPG8n" name="PluginWindow.cpp" compile="1" resource="0"
+            file="Source/PluginWindow.cpp"/>
+      <FILE id="FjzDGr" name="PluginWindow.h" compile="0" resource="0" file="Source/PluginWindow.h"/>
       <FILE id="RdhPvQ" name="PluginComponent.cpp" compile="1" resource="0"
             file="Source/PluginComponent.cpp"/>
       <FILE id="tIZzCO" name="PluginComponent.h" compile="0" resource="0"

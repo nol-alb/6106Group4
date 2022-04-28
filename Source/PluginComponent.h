@@ -12,6 +12,7 @@
 #define __hdr_PluginComponent_h__
 
 #include <JuceHeader.h>
+#include "PluginWindow.h"
 
 class PluginComponent : public juce::Component {
 public:
@@ -24,7 +25,9 @@ public:
 private:
     const float utilRegionWidthRatio = 0.2;
     std::unique_ptr<juce::Button> openEditorButton;
+
     NodePtr pluginNodePtr;
+    std::unique_ptr<juce::PluginWindow> pluginWindow;
 };
 
 #endif // __hdr_PluginComponent_h__

@@ -17,8 +17,11 @@ PluginComponent::PluginComponent(NodePtr nodePtr) {
     openEditorButton = std::make_unique<juce::TextButton>("edit");
     addAndMakeVisible(*openEditorButton);
 
+    // initialize plugin window
+    pluginWindow = std::make_unique<juce::PluginWindow>(pluginNodePtr.get(), juce::PluginWindow::Type::normal);
+
     openEditorButton->onClick = [this] {
-        
+        pluginWindow->setVisible(true);
     };
 }
 
