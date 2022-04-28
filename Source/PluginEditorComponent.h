@@ -9,3 +9,15 @@
 */
 
 #pragma once
+#ifndef __hdr_PluginEditorComponent_h__
+#define __hdr_PluginEditorComponent_h__
+
+#include <JuceHeader.h>
+
+class PluginEditorComponent : public juce::Component {
+public:
+    PluginEditorComponent();
+    ~PluginEditorComponent();
+};
+
+#endif // __hdr_PluginEditorComponent_h__

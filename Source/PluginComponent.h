@@ -21,7 +21,7 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 private:
-
+    const float utilRegionWidthRatio = 0.2;
     std::unique_ptr<juce::Button> openEditorButton;
     juce::String pluginName;
 };
