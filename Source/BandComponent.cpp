@@ -25,7 +25,7 @@ void BandComponent::__updatePluginWrapperComponents() {
     for (auto nodePtr : pluginLinkedList->pluginList) {
         addAndMakeVisible(
             pluginComponents.add(
-                new PluginComponent(nodePtr->getProcessor()->getName())
+                new PluginComponent(nodePtr)
             )
         );
     }

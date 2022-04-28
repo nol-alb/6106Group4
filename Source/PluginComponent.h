@@ -15,7 +15,8 @@
 
 class PluginComponent : public juce::Component {
 public:
-    PluginComponent(const juce::String& name);
+    using NodePtr = juce::AudioProcessorGraph::Node::Ptr;
+    PluginComponent(NodePtr nodePtr);
     ~PluginComponent();
 
     void paint(juce::Graphics& g) override;
@@ -23,7 +24,7 @@ public:
 private:
     const float utilRegionWidthRatio = 0.2;
     std::unique_ptr<juce::Button> openEditorButton;
-    juce::String pluginName;
+    NodePtr pluginNodePtr;
 };
 
 #endif // __hdr_PluginComponent_h__

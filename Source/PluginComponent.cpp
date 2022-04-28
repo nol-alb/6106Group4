@@ -10,8 +10,8 @@
 
 #include "PluginComponent.h"
 
-PluginComponent::PluginComponent(const juce::String& name) {
-    pluginName = name; // copy initialization
+PluginComponent::PluginComponent(NodePtr nodePtr) {
+    pluginNodePtr = nodePtr;
 
     // add button
     openEditorButton = std::make_unique<juce::TextButton>("edit");
@@ -33,7 +33,7 @@ void PluginComponent::paint(juce::Graphics& g) {
     g.drawRoundedRectangle(0, 0, getWidth(), getHeight(), 5, 1);
 
     g.setFont(14.0f);
-    g.drawText(pluginName, getLocalBounds().reduced(10), juce::Justification::centredLeft, true);
+    g.drawText(pluginNodePtr->getProcessor()->getName(), getLocalBounds().reduced(10), juce::Justification::centredLeft, true);
 }
 
 void PluginComponent::resized() {
