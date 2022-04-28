@@ -8,16 +8,25 @@
   ==============================================================================
 */
 
-#include "PluginWrapperComponent.h"
+#include "PluginComponent.h"
 
-PluginWrapperComponent::PluginWrapperComponent(const juce::String& name) {
+PluginComponent::PluginComponent(const juce::String& name) {
     pluginName = name; // copy initialization
+
+    // add button
+    openEditorButton = std::make_unique<juce::TextButton>("edit");
+    addAndMakeVisible(*openEditorButton);
+
+    openEditorButton->onClick = [this] {
+        
+    };
 }
 
-PluginWrapperComponent::~PluginWrapperComponent() {
+PluginComponent::~PluginComponent() {
+    openEditorButton.reset();
 }
 
-void PluginWrapperComponent::paint(juce::Graphics& g) {
+void PluginComponent::paint(juce::Graphics& g) {
     g.fillAll(juce::Colours::darkgrey);
 
     g.setColour(juce::Colours::white);
@@ -27,6 +36,6 @@ void PluginWrapperComponent::paint(juce::Graphics& g) {
     g.drawText(pluginName, getLocalBounds(), juce::Justification::centred, true);
 }
 
-void PluginWrapperComponent::resized() {
+void PluginComponent::resized() {
 
 }

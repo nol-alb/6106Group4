@@ -5,7 +5,7 @@
 #include "PluginProcessor.h"
 #include "PluginPluginManager.h"
 #include "PluginLinkedList.h"
-#include "PluginWrapperComponent.h"
+#include "PluginComponent.h"
 #include "PluginListPopupMenu.h"
 
 #endif // __hdr_PluginInclude_h__

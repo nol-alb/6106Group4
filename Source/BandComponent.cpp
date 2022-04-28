@@ -17,15 +17,15 @@ BandComponent::BandComponent(PluginLinkedList* list) {
 
 BandComponent::~BandComponent() {
     // pluginList is not initialized in this class, thus not deleting it
-    pluginWrapperComponents.clear();
+    pluginComponents.clear();
 }
 
 void BandComponent::__updatePluginWrapperComponents() {
-    if (!pluginWrapperComponents.isEmpty()) pluginWrapperComponents.clear();
+    if (!pluginComponents.isEmpty()) pluginComponents.clear();
     for (auto nodePtr : pluginLinkedList->pluginList) {
         addAndMakeVisible(
-            pluginWrapperComponents.add(
-                new PluginWrapperComponent(nodePtr->getProcessor()->getName())
+            pluginComponents.add(
+                new PluginComponent(nodePtr->getProcessor()->getName())
             )
         );
     }
@@ -42,7 +42,7 @@ void BandComponent::resized() {
     auto localBounds = getLocalBounds();
 
     juce::FlexBox pluginWrapperComponentFlexBox;
-    for (auto wrappedPlugin : pluginWrapperComponents) {
+    for (auto wrappedPlugin : pluginComponents) {
         pluginWrapperComponentFlexBox.items.add(juce::FlexItem(w, h, *wrappedPlugin));
     }
     pluginWrapperComponentFlexBox.flexDirection = juce::FlexBox::Direction::column;

@@ -8,20 +8,22 @@
   ==============================================================================
 */
 
-#ifndef __hdr_PluginWrapperComponent_h__
-#define __hdr_PluginWrapperComponent_h__
+#ifndef __hdr_PluginComponent_h__
+#define __hdr_PluginComponent_h__
 
 #include <JuceHeader.h>
 
-class PluginWrapperComponent : public juce::Component {
+class PluginComponent : public juce::Component {
 public:
-    PluginWrapperComponent(const juce::String& name);
-    ~PluginWrapperComponent();
+    PluginComponent(const juce::String& name);
+    ~PluginComponent();
 
     void paint(juce::Graphics& g) override;
     void resized() override;
 private:
+
+    std::unique_ptr<juce::Button> openEditorButton;
     juce::String pluginName;
 };
 
-#endif // __hdr_PluginWrapperComponent_h__
+#endif // __hdr_PluginComponent_h__

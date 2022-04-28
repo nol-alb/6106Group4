@@ -12,7 +12,7 @@
 #define __hdr_BandComponent_h__
 
 #include <JuceHeader.h>
-#include "PluginWrapperComponent.h"
+#include "PluginComponent.h"
 #include "PluginLinkedList.h"
 
 class BandComponent : public juce::Component {
@@ -25,7 +25,7 @@ public:
 
 private:
     //==============================================================================
-    juce::OwnedArray<PluginWrapperComponent> pluginWrapperComponents;
+    juce::OwnedArray<PluginComponent> pluginComponents;
     PluginLinkedList* pluginLinkedList;
 
     //==============================================================================
