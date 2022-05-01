@@ -89,28 +89,6 @@ RecursionTestAudioProcessor::RecursionTestAudioProcessor()
     //==============================================================================
     // initialize pluginLinkedLists
     for (int i = 0; i < numBand; ++i) pluginLinkedLists.emplace_back(new PluginLinkedList());
-    
-    //==============================================================================
-    // insert plugins (temporary, should be replaced with UI)
-    // juce::String errorString;
-    // auto scannedPluginList = knownPluginList->getTypes();
-    // auto pluginDescription_a = scannedPluginList[0];
-    // auto pluginDescription_b = scannedPluginList[1];
-
-    // {
-    //     auto iter = pluginLinkedLists.begin();
-
-    //     auto pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
-    //     (*iter)->append(std::move(pluginInstance));
-    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
-    //     (*iter)->append(std::move(pluginInstance));
-    //     std::advance(iter, 2);
-
-    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_a, getSampleRate(), getBlockSize(), errorString);
-    //     (*iter)->append(std::move(pluginInstance));
-    //     pluginInstance = audioPluginFormatManager->createPluginInstance(pluginDescription_b, getSampleRate(), getBlockSize(), errorString);
-    //     (*iter)->append(std::move(pluginInstance));
-    // }
 }
 
 RecursionTestAudioProcessor::~RecursionTestAudioProcessor()
@@ -350,6 +328,66 @@ juce::AudioProcessorEditor* RecursionTestAudioProcessor::createEditorAtIndex(int
     return nullptr;
 }
 
+/* https://forum.juce.com/t/logarithmic-slider-for-frequencies-iir-hpf/37569/10 */
+static inline juce::NormalisableRange<float> getNormalisableRangeExp(float min, float max)
+{
+    jassert(min > 0.0f);
+    jassert(max > 0.0f);
+    jassert(min < max);
+    
+    float logmin = std::log(min);
+    float logmax = std::log(max);
+    float logrange = (logmax - logmin);
+    
+    jassert(logrange > 0.0f);
+    
+    return juce::NormalisableRange<float>(min, max,
+                                    [logmin,logrange](float start, float end, float normalized)
+                                    {
+                                        normalized = std::max(0.0f, std::min(1.0f, normalized));
+                                        float value = exp((normalized * logrange) + logmin);
+                                        return std::max(start, std::min(end, value));
+                                    },
+                                    [logmin,logrange](float start, float end, float value)
+                                    {
+                                        value = std::max(start, std::min(end, value));
+                                        float logvalue = std::log(value);
+                                        return (logvalue - logmin) / logrange;
+                                    },
+                                    [](float start, float end, float value)
+                                    {
+                                        return std::max(start, std::min(end, value));
+                                    });
+}
+
+/* https://forum.juce.com/t/setnumdecimalplacestodisplay-not-behaving-solved/33686/8 */
+class AudioParameterFloatExp : public juce::AudioParameterFloat
+{
+public:
+    AudioParameterFloatExp( const juce::String    &parameterID,
+                            const juce::String    &parameterName,
+                            float                  minValue,
+                            float                  maxValue,
+                            float                  defaultValue) :
+    AudioParameterFloat(
+        parameterID, 
+        parameterName, 
+        getNormalisableRangeExp(minValue, maxValue), 
+        defaultValue, 
+        juce::String(), 
+        AudioProcessorParameter::genericParameter,
+        [] (float value, int) {
+            return value < 1000.f ? juce::String(value, 2) + " Hz" : juce::String(value / 1000.f, 3) + " kHz";
+        },
+        [] (const juce::String& text) {
+            return text.endsWith("kHz") ? text.dropLastCharacters(3).getFloatValue() * 1000.f : text.dropLastCharacters(2).getFloatValue();
+        }
+    )
+    {
+        
+    }
+};
+
 juce::AudioProcessorValueTreeState::ParameterLayout RecursionTestAudioProcessor::createParameterlayout()
 {
     APVTS::ParameterLayout layout;
@@ -358,8 +396,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout RecursionTestAudioProcessor:
     using namespace Params;
     const auto& params = GetParams();
 
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Low_Mid_Crossover_Freq),params.at(Names::Low_Mid_Crossover_Freq), NormalisableRange<float>(20, 999, 1, 1), 400));
-    layout.add(std::make_unique<AudioParameterFloat>(params.at(Names::Mid_High_Crossover_Freq),params.at(Names::Mid_High_Crossover_Freq), NormalisableRange<float>(1000, 20000, 1, 1), 2000));
+    layout.add(std::make_unique<AudioParameterFloatExp>(params.at(Names::Low_Mid_Crossover_Freq),params.at(Names::Low_Mid_Crossover_Freq), 20, 1000, 400));
+    layout.add(std::make_unique<AudioParameterFloatExp>(params.at(Names::Mid_High_Crossover_Freq),params.at(Names::Mid_High_Crossover_Freq), 1000, 20000, 4000));
     
     return layout;
 }
