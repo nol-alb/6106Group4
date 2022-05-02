@@ -23,6 +23,8 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
 
+    void removePluginComponent(const PluginComponent* pluginComponent);
+
 private:
     //==============================================================================
     juce::OwnedArray<PluginComponent> pluginComponents;
@@ -44,6 +46,7 @@ private:
     //==============================================================================
     void __updatePluginWrapperComponents();
     void __initializeAddPluginButton();
+    void __refresh();
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (BandComponent)

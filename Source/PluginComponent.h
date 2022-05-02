@@ -14,17 +14,22 @@
 #include <JuceHeader.h>
 #include "PluginWindow.h"
 
+class BandComponent;
+
 class PluginComponent : public juce::Component {
 public:
     using NodePtr = juce::AudioProcessorGraph::Node::Ptr;
-    PluginComponent(NodePtr nodePtr);
+    PluginComponent(NodePtr nodePtr, BandComponent* owner);
     ~PluginComponent();
 
     void paint(juce::Graphics& g) override;
     void resized() override;
 private:
-    const float utilRegionWidthRatio = 0.2;
+    BandComponent* parentBandComponent;
+
+    const float unitUtilRegionWidthRatio = 0.1;
     std::unique_ptr<juce::Button> openEditorButton;
+    std::unique_ptr<juce::Button> deleteButton;
 
     NodePtr pluginNodePtr;
     std::unique_ptr<juce::PluginWindow> pluginWindow;

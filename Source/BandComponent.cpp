@@ -23,11 +23,18 @@ BandComponent::~BandComponent() {
     pluginComponents.clear();
 }
 
+void BandComponent::removePluginComponent(const PluginComponent* pluginComponent) {
+    int index = pluginComponents.indexOf(pluginComponent);
+    pluginComponents.remove(index);
+    pluginLinkedList->remove(index);
+    __refresh();
+}
+
 void BandComponent::__updatePluginWrapperComponents() {
     if (!pluginComponents.isEmpty()) pluginComponents.clear();
     for (auto nodePtr : pluginLinkedList->pluginList) {
         pluginComponents.add(
-            new PluginComponent(nodePtr)
+            new PluginComponent(nodePtr, this)
         );
     }
 }
@@ -46,8 +53,7 @@ void BandComponent::__initializeAddPluginButton() {
                 if (0 <= index && index < types.size()) {
                     auto pluginDescription = types[index];
                     pluginLinkedList->append(std::move(audioProcessor.createPlugin(pluginDescription)));
-                    __updatePluginWrapperComponents();
-                    resized();
+                    __refresh();
                 }
             }
         );
@@ -85,4 +91,9 @@ void BandComponent::resized() {
     addAndMakeVisible(pluginComponentViewport);
 
     addPluginButton.setBounds(buttonLocalBounds);
+}
+
+void BandComponent::__refresh() {
+    __updatePluginWrapperComponents();
+    resized();
 }

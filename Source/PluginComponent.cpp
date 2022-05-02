@@ -9,24 +9,34 @@
 */
 
 #include "PluginComponent.h"
+#include "BandComponent.h"
 
-PluginComponent::PluginComponent(NodePtr nodePtr) {
+PluginComponent::PluginComponent(NodePtr nodePtr, BandComponent* owner) : parentBandComponent(owner) {
     pluginNodePtr = nodePtr;
 
-    // add button
+    // initialize open editor button
     openEditorButton = std::make_unique<juce::TextButton>("edit");
+    openEditorButton->onClick = [this] {
+        pluginWindow->setVisible(true);
+    };
     addAndMakeVisible(*openEditorButton);
+
+    // intialize delete plugin button
+    deleteButton = std::make_unique<juce::TextButton>("x");
+    deleteButton->onClick = [this] {
+        parentBandComponent->removePluginComponent(this);
+    };
+    addAndMakeVisible(*deleteButton);
 
     // initialize plugin window
     pluginWindow = std::make_unique<juce::PluginWindow>(pluginNodePtr.get(), juce::PluginWindow::Type::normal);
 
-    openEditorButton->onClick = [this] {
-        pluginWindow->setVisible(true);
-    };
 }
 
 PluginComponent::~PluginComponent() {
     openEditorButton.reset();
+    deleteButton.reset();
+    pluginWindow.reset();
 }
 
 void PluginComponent::paint(juce::Graphics& g) {
@@ -46,8 +56,9 @@ void PluginComponent::resized() {
     juce::FlexBox utilFlexBox; // this flex box stores 1. open editor buttion; 2. delete plugin button
 
     // TODO currently only editor button has been implemented. Delete plugin button will be added later.
-    utilFlexBox.items.add(juce::FlexItem(w * utilRegionWidthRatio, h, *openEditorButton));
+    utilFlexBox.items.add(juce::FlexItem(w * unitUtilRegionWidthRatio, h, *openEditorButton));
+    utilFlexBox.items.add(juce::FlexItem(w * unitUtilRegionWidthRatio, h, *deleteButton));
     
-    bounds.removeFromLeft(w * (1 - utilRegionWidthRatio));
+    bounds.removeFromLeft(w * (1 - unitUtilRegionWidthRatio * utilFlexBox.items.size()));
     utilFlexBox.performLayout(bounds);
 }

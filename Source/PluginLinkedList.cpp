@@ -27,24 +27,10 @@ void PluginLinkedList::append(std::unique_ptr<AudioProcessor> processor) {
     needToReconstructGraph = true;
 }
 
-// void PluginLinkedList::appendLeft(std::unique_ptr<AudioProcessor> processor) {
-// }
-// 
-// void PluginLinkedList::insert(nodePtr ptr, int index) {
-// }
-// 
-// PluginLinkedList::nodePtr PluginLinkedList::pop() {
-// }
-// 
-// 
-// PluginLinkedList::nodePtr PluginLinkedList::popLeft() {
-// }
-// 
-// PluginLinkedList::nodePtr PluginLinkedList::remove(int index) {
-// }
-// 
-// PluginLinkedList::nodePtr PluginLinkedList::get(int index) {
-// }
+void PluginLinkedList::remove(int index) {
+    pluginList.remove(index);
+    needToReconstructGraph = true;
+}
 
 long long PluginLinkedList::size() const {
     return pluginList.size();
@@ -168,14 +154,12 @@ void PluginLinkedList::initGraph() {
 
     audioInputNode  = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioInputNode));
     audioOutputNode = graph.addNode(std::make_unique<AudioGraphIOProcessor>(AudioGraphIOProcessor::audioOutputNode));
-    
-    __connect(audioInputNode, audioOutputNode);
 
     needToReconstructGraph = true;
 }
 
 void PluginLinkedList::updateGraph() {
-    if (needToReconstructGraph && !pluginList.isEmpty()) {
+    if (needToReconstructGraph) {
         for (auto connection : graph.getConnections()) {
             graph.removeConnection(connection);
         }

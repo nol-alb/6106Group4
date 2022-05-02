@@ -19,14 +19,7 @@ public:
     virtual ~PluginLinkedList();
  
     void append(std::unique_ptr<AudioProcessor> processor);
-    // void appendLeft(std::unique_ptr<AudioProcessor> processor);
-    
-    // nodePtr pop();
-    // nodePtr popLeft();
-
-    // void insert(nodePtr, int);
-    // nodePtr remove(int);
-    // nodePtr get(int);
+    void remove(int);
 
     long long size() const;
 
@@ -50,7 +43,6 @@ public:
     virtual void setStateInformation(const void* data, int sizeInBytes) override;
 
 private:
-
     using AudioProcessorGraph = juce::AudioProcessorGraph;
     using AudioGraphIOProcessor = AudioProcessorGraph::AudioGraphIOProcessor;
     using Node = juce::AudioProcessorGraph::Node;
