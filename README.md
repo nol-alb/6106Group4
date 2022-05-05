@@ -25,7 +25,7 @@ The target users for our application involve any users with a broadband audio si
 -	Split frequency bands
 -	Scan and list plugins from third parties
 
-## Plans for implementation
+## Implementation Details
 
 ### Flow Chart
 
