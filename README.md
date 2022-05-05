@@ -35,4 +35,5 @@ The flow chart already includes processor blocks.
 
 ### Class Structure
 
+![Class Structure](Images/classstructure.png)
 
