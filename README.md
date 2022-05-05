@@ -15,7 +15,7 @@ We are aiming to create an application that can split signals into frequency ban
 
 The target users for our application involve any users with a broadband audio signal to process. This application will allow users to have access to a large variety of third-party plugins to apply to a range of bands within the application for optimal sound quality control. We hope to make the system easy to use, with minimal latency between band effects and an easy to understand UI. We see this mainly as a creative tool used by producers but can also extend its applications in corrective engineering of the tracks and mastering.
 
-## UI Mock-up
+## UI
 ![UI/UX](Images/UI.jpg)
 - With the UI we have planned, the user will have control over the bandwidth of 4 frequency bands that the stem cab be split into
 - They can adjust the gain of the input broadband signal
