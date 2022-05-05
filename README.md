@@ -9,6 +9,9 @@ The MultiPass Plugin Host is an audio application and plugin that gives musician
 When you want to add effects to certain sounds on your compositional project it is not uncommon that you would like to apply the effects to only certain parts of the sound. For example, you would like to apply a panning effect just for the sub-bass frequency range keeping all the other bands stable, or you would like to apply distortion to make your high end stand out. Multiband processing adds a dimension to effect chains that really opens up a new world of options in sound design and creativity. 
 “The MultiPass Plugin Host” Allows you to do this, letting you split the input sound into 3 easily tweakable frequency bands and applying any number of effects to each band.
 
+### Demo Reel
+[Add link here]
+
 
 ## Applications, use cases, and target users 
 
