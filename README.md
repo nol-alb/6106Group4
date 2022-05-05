@@ -39,7 +39,7 @@ The target users for our application involve any users with a broadband audio si
 
 The flow chart already includes processor blocks.
 
-![flow_chart](images/FlowASE.drawio.png)
+![flow_chart](Images/Flow.png)
 
 ### Needed components and potential need for 3rd-party libs
 
